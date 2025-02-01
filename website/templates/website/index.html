@@ -1,0 +1,27 @@
+{% load static %}
+<!doctype html>
+<html lang="en-GB">
+  <head>
+    <script src="{% static 'maplibre-gl.js' %}"></script>
+  	<link href="{% static 'maplibre-gl.css' %}" rel="stylesheet" />
+    <meta charset="utf-8" />
+    <title>My test page</title>
+    <style>
+      body { margin: 0; padding: 0; }
+      html, body, #map { height: 100%; }
+    </style>
+  </head>
+  <body>
+    <p>This is my page</p>
+    <p>The test map is below</p>
+    <div id="map"></div>
+    <script>
+        var map = new maplibregl.Map({
+            container: 'map', // container id
+            style: 'https://demotiles.maplibre.org/style.json', // style URL
+            center: [0, 0], // starting position [lng, lat]
+            zoom: 1 // starting zoom
+        });
+    </script>
+  </body>
+</html>
