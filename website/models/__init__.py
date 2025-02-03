@@ -7,5 +7,4 @@ from .shapes import Shapes
 from .stop_times import StopTimes
 from .stops import Stops
 from .trips import Trips
-from .stop_times import UniqueStop
 from .gtfs_data import GTFSDataInfo

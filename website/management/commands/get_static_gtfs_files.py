@@ -7,7 +7,7 @@ from datetime import datetime
 from django.conf import settings
 from django.utils import timezone
 from django.core.management.base import BaseCommand
-from website.models import Routes, Stops, Trips, StopTimes, Calendar, CalendarDates, Agency, Shapes, UniqueStop, FeedInfo, GTFSDataInfo
+from website.models import Routes, Stops, Trips, StopTimes, Calendar, CalendarDates, Agency, Shapes, FeedInfo, GTFSDataInfo
 
 #import hashlib
 
@@ -65,7 +65,7 @@ class Command(BaseCommand):
 
             with zipfile.ZipFile(io.BytesIO(response.content)) as zip_file:
                 #Process files in correct order
-                models_to_delete = [UniqueStop, StopTimes, Trips, Routes, CalendarDates, Calendar, Stops, Agency, Shapes] #Order is important as the ones at the start depend on the ones at the end
+                models_to_delete = [StopTimes, Trips, Routes, CalendarDates, Calendar, Stops, Agency, Shapes] #Order is important as the ones at the start depend on the ones at the end
                 for model in models_to_delete:
                     deleted_count, _ = model.objects.all().delete()
                     self.stdout.write(self.style.SUCCESS(f'Successfully deleted {deleted_count} {model.__name__} objects'))
@@ -101,7 +101,6 @@ class Command(BaseCommand):
         if model:
             model.objects.all().delete()
             objs = []
-            sub_objs = []
             for row in reader:
                 try:
                     
@@ -122,15 +121,21 @@ class Command(BaseCommand):
                     elif model_name == 'stop_times':
                         trip_id = row.get('trip_id')
                         stop_id = row.get('stop_id')
-                        stop_seq = row.get('stop_sequence')
+                        #stop_seq = row.get('stop_sequence')
                         trip_instance = Trips.objects.get(trip_id=trip_id) if trip_id else None
                         stop_instance = Stops.objects.get(stop_id=stop_id) if stop_id else None
-                        #unique_stop_instance, created = UniqueShape.objects.get_or_create(trip=trip_instance, stop_sequence = stop_seq)
-                        uniq_stop = UniqueStop(trip=trip_instance, stop_sequence=stop_seq)
-                        #objs.append(UniqueStop(trip=trip_instance, stop_sequence=stop_seq))
-                        sub_objs.append(uniq_stop)
+                        arrival_full = str(row.get("arrival_time"))
+                        depart_full = str(row.get("departure_time"))
+                        arrival_hour, arrival_minute, arrival_second = map(int, arrival_full.split(":"))
+                        arrival_total_seconds = (arrival_hour*60*60) + (arrival_minute*60) + arrival_second
+                        depart_hour, depart_minute, depart_second = map(int, depart_full.split(":"))
+                        depart_total_seconds = (depart_hour*60*60) + (depart_minute*60) + depart_second
                         #model.objects.create(trip = trip_instance, stop = stop_instance, **{k: v for k, v in row.items() if k not in ['trip_id', 'stop_id']})
-                        objs.append(model(unique_stop=uniq_stop, stop=stop_instance, **{k: v for k, v in row.items() if k not in ['trip_id', 'stop_id', 'stop_sequence']}))
+                        #print_mod = model(trip=trip_instance, stop=stop_instance, arrival_time=arrival_total_seconds, departure_time=depart_total_seconds,
+                        #                  **{k: v for k, v in row.items() if k not in ['trip_id', 'stop_id', 'arrival_time', 'departure_time']})
+                        objs.append(model(trip=trip_instance, stop=stop_instance, arrival_time=arrival_total_seconds, departure_time=depart_total_seconds,
+                                          **{k: v for k, v in row.items() if k not in ['trip_id', 'stop_id', 'arrival_time', 'departure_time']}))
+                        #self.stdout.write(self.style.SUCCESS(f"Arrival Time: {print_mod.arrival_time} Departure Time: {print_mod.departure_time}"))
                         #objs.append(model(**{k: v for k, v in row.items() if k not in ['trip_id', 'stop_id', 'stop_sequence']}, stop=stop_instance, unique_stop_instance=objs.pop()))
                     elif model_name == 'calendar_dates':
                         service_id = row.get('service_id')
@@ -150,17 +155,6 @@ class Command(BaseCommand):
                         row['location_type'] = location_type
                         #model.objects.create(**row)
                         objs.append(model(**row))
-                    elif model_name == 'shapes':
-                        #shape_id = row.get('shape_id')
-                        #unique_shape_instance, created = UniqueShape.objects.get_or_create(shape_id=shape_id)
-                        #new_uniq = UniqueShape(shape_id=shape_id)
-                        #objs.append(UniqueShape(shape_id=shape_id))
-                        #sub_objs.append(new_uniq)
-                        #model.objects.create(unique_shape=unique_shape_instance, **{k: v for k, v in row.items() if k != 'shape_id'})
-                        #objs.append(model(unique_shape=unique_shape_instance, **{k: v for k, v in row.items() if k != 'shape_id'}))
-                        #objs.append(model(unique_shape=new_uniq, **{k: v for k, v in row.items() if k != 'shape_id'}))
-                        #objs.append(model(**{k: v for k, v in row.items() if k != 'shape_id'}, objs.pop()))
-                        objs.append(model(**row))
                     else:
                         #model.objects.create(**row)
                         objs.append(model(**row))
@@ -168,13 +162,6 @@ class Command(BaseCommand):
                 except Exception as e:
                     self.stderr.write(self.style.ERROR(f"Error importing row: {row} into {model_name}: {e}"))
             if objs:
-                    if model_name == 'stop_times':
-                        #UniqueStop.objects.bulk_create(sub_objs, batch_size=200000)
-                        UniqueStop.objects.bulk_create(sub_objs, batch_size=100000)
-                        self.stdout.write(self.style.SUCCESS(f'unique_stop data imported succesfully!'))
-                    '''elif model_name == 'shapes':
-                        UniqueShape.objects.bulk_create(sub_objs, batch_size=200000)
-                        self.stdout.write(self.style.SUCCESS(f'unique_shape data imported succesfully!'))'''
                     model.objects.bulk_create(objs, batch_size=100000)
                     self.stdout.write(self.style.SUCCESS(f'{model_name} data imported succesfully!'))
             else:
