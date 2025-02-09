@@ -16,11 +16,24 @@ class Command(BaseCommand):
             if hasattr(settings, 'GTFS_REALTIME_API_KEY') and settings.GTFS_REALTIME_API_KEY:
                 headers['x-api-key'] = f'{settings.GTFS_REALTIME_API_KEY}'
                 headers['Cache-Control'] = 'no-cache'
-                headers['format'] = 'json'
+                #headers['format'] = 'json'
 
             response = requests.get(api_url, headers=headers, timeout=10) # Timeout after 10 seconds
 
             response.raise_for_status()  # Raise an exception for bad status codes (4xx or 5xx)
+
+            locations_url = settings.GTFS_REALTIME_LOCATIONS_URL
+            if not locations_url:
+                raise ValueError("GTFS_REALTIME_LOCATIONS_URL not set in settings.py")
+            headers = {}
+            if hasattr(settings, 'GTFS_REALTIME_API_KEY') and settings.GTFS_REALTIME_API_KEY:
+                headers['x-api-key'] = f'{settings.GTFS_REALTIME_API_KEY}'
+                headers['Cache-Control'] = 'no-cache'
+                #headers['format'] = 'json'
+
+            locations = requests.get(api_url, headers=headers, timeout=10) # Timeout after 10 seconds
+
+            locations.raise_for_status()  # Raise an exception for bad status codes (4xx or 5xx)
 
             # Handle different data formats (JSON, Protocol Buffer)
             '''if response.headers.get('Content-Type') == 'application/x-protobuf':
@@ -36,6 +49,7 @@ class Command(BaseCommand):
                        self.stdout.write(self.style.SUCCESS(f'Fetched trip update: {trip_id}'))'''
             #else: #Default to json
             data = response.json()
+            location_json = locations.json()
             # Process the JSON data
             '''for item in data['entity']: #Adapt to your data
                 if 'trip_update' in item:
@@ -52,10 +66,16 @@ class Command(BaseCommand):
                             if isinstance(route_id, str) and route_id.endswith('456'):
                                 print('Found route 456')'''
             i = 0
-            for item in data['entity']:
-                print(f'{item}\n')
+            for update in data['entity']:
+                print(f'{update}\n')
                 i = i+1
-            #print(f"There are {i} updates per API call")
+            print(f"There are {i} updates per API call")
+
+            j = 0
+            for location in location_json['entity']:
+                print(f'{location}\n')
+                j = j+1
+            print(f"There are {j} location updates per API call")
 
         except requests.exceptions.RequestException as e:
             self.stderr.write(self.style.ERROR(f'Error fetching GTFS data: {e}'))

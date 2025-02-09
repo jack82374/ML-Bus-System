@@ -8,3 +8,5 @@ from .stop_times import StopTimes
 from .stops import Stops
 from .trips import Trips
 from .gtfs_data import GTFSDataInfo
+from .trip_updates import TripUpdate
+from .vehicle_position import VehiclePosition

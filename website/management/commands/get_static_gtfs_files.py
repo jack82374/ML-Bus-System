@@ -21,7 +21,6 @@ class Command(BaseCommand):
             gtfs_info = GTFSDataInfo.objects.create()
         try:
             url = settings.GTFS_ZIP_URL
-            local_hash = settings.GTFS_LOCAL_HASH
             response = requests.head(url)  # Efficiently check for changes
             response.raise_for_status()
 
@@ -44,8 +43,6 @@ class Command(BaseCommand):
             else:'''
             #self.stdout.write(self.style.WARNING('No hash URL provided, relying on last modified.'))
             #if hasattr(settings, 'GTFS_STATIC_MOD_DATE') and settings.GTFS_STATIC_MOD_DATE:
-            gtfs_info.last_modified = None #Get rid of this
-            gtfs_info.save() #And this afterwards
             if last_modified_date and (gtfs_info.last_modified is None or last_modified_date > gtfs_info.last_modified):
                 self.stdout.write(self.style.NOTICE(f'GTFS Static Files Update Detected'))
                 self.import_gtfs_data(url)

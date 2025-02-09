@@ -1,6 +1,8 @@
 from django.apps import AppConfig
 
-
-class WebsiteConfig(AppConfig):
-    default_auto_field = 'django.db.models.BigAutoField'
+class MyAppConfig(AppConfig):
     name = 'website'
+
+    def ready(self):
+        from .scheduler import start_scheduler
+        start_scheduler()

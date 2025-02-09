@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django_apscheduler',
     'website'
 ]
 
@@ -135,7 +136,8 @@ STATICFILES_DIRS = (
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-GTFS_REALTIME_API_URL = "https://api.nationaltransport.ie/gtfsr/v2/gtfsr?format=json"
+GTFS_REALTIME_API_URL = "https://api.nationaltransport.ie/gtfsr/v2/TripUpdates?format=json"
+GTFS_REALTIME_LOCATIONS_URL = "https://api.nationaltransport.ie/gtfsr/v2/Vehicles?format=json"
 #GTFS_REALTIME_API_URL = "https://api.nationaltransport.ie/gtfsr/v2/gtfsr?format=json&key=824e56ea80354749b8a7e4560fb70a5c"
 GTFS_REALTIME_API_KEY = "824e56ea80354749b8a7e4560fb70a5c"
 GTFS_ZIP_URL = "https://www.transportforireland.ie/transitData/Data/GTFS_Realtime.zip"
