@@ -22,6 +22,18 @@
             center: [0, 0], // starting position [lng, lat]
             zoom: 1 // starting zoom
         });
+
+        fetch('/website/stops/')
+          .then(response => response.json())
+          .then(data => {
+            data.forEach(stop => {
+              //console.log(stop)
+              new maplibregl.Marker()
+                .setLngLat([stop.stop_lon, stop.stop_lat])
+                .setPopup(new maplibregl.Popup().setText(stop.stop_name))
+                .addTo(map);
+            });
+          });
     </script>
   </body>
 </html>
