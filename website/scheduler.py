@@ -16,15 +16,15 @@ scheduler.add_jobstore(DjangoJobStore(), "default")
     print(f'Scheduler stopped')
     sys.exit(0)'''
 
-def run_get_gtfs():
-    call_command('get_gtfs')
+#def run_get_gtfs():
+#    call_command('get_gtfs')
 
 def refresh_static():
     call_command('get_static_gtfs_files')
 
 # Schedule the task
 def add_jobs():
-    scheduler.add_job(run_get_gtfs, 'interval', minutes=1, id='get_trip_and_location_updates', replace_existing=True)
+    #scheduler.add_job(run_get_gtfs, 'interval', minutes=1, id='get_trip_and_location_updates', replace_existing=True)
     static_trigger = CronTrigger(
             year="*", month="*", day="*", hour="1", minute="30", second="0"
         )

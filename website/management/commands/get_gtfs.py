@@ -31,7 +31,7 @@ class Command(BaseCommand):
                 headers['Cache-Control'] = 'no-cache'
                 #headers['format'] = 'json'
 
-            locations = requests.get(api_url, headers=headers, timeout=10) # Timeout after 10 seconds
+            locations = requests.get(locations_url, headers=headers, timeout=10) # Timeout after 10 seconds
 
             locations.raise_for_status()  # Raise an exception for bad status codes (4xx or 5xx)
 
@@ -66,10 +66,10 @@ class Command(BaseCommand):
                             if isinstance(route_id, str) and route_id.endswith('456'):
                                 print('Found route 456')'''
             i = 0
-            for update in data['entity']:
+            '''for update in data['entity']:
                 print(f'{update}\n')
                 i = i+1
-            print(f"There are {i} updates per API call")
+            print(f"There are {i} updates per API call")'''
 
             j = 0
             for location in location_json['entity']:

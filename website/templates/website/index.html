@@ -18,9 +18,12 @@
     <script>
         var map = new maplibregl.Map({
             container: 'map', // container id
-            style: 'https://demotiles.maplibre.org/style.json', // style URL
-            center: [0, 0], // starting position [lng, lat]
-            zoom: 1 // starting zoom
+            //style: 'https://demotiles.maplibre.org/style.json', // style URL
+            //style: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
+            //style: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
+            style: 'https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json',
+            center: [-8.468399, 51.903614], // starting position [lng, lat]
+            zoom: 15 // starting zoom
         });
 
         fetch('/website/stops/')
@@ -31,6 +34,19 @@
               new maplibregl.Marker()
                 .setLngLat([stop.stop_lon, stop.stop_lat])
                 .setPopup(new maplibregl.Popup().setText(stop.stop_name))
+                .addTo(map);
+            });
+          });
+        fetch('/website/locations/')
+          .then(response => response.json())
+          .then(data => {
+            data.entity.forEach(location => {
+              console.log(location);
+              string_to_display = location.id + " on trip " + location.vehicle.trip.trip_id;
+              //console.log(stop)
+              new maplibregl.Marker({color: "#FF0000"})
+                .setLngLat([location.vehicle.position.longitude, location.vehicle.position.latitude])
+                .setPopup(new maplibregl.Popup().setText(string_to_display),)
                 .addTo(map);
             });
           });
