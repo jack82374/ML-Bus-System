@@ -1,11 +1,5 @@
 from django.db import models
 
-'''class UniqueShape(models.Model):  # New model for unique shapes
-    shape_id = models.CharField(max_length=255, primary_key=True)
-
-    def __str__(self):
-        return self.shape_id'''
-
 class Shapes(models.Model):
     #pk = models.CompositePrimaryKey("shape_id", "shape_pt_sequence")
     #unique_shape = models.ForeignKey(UniqueShape, on_delete=models.RESTRICT)

@@ -1,6 +1,6 @@
 from django.db import models
 
-from website.models.calendar import Calendar
+from website.models import Calendar
 
 class CalendarDates(models.Model):
     service = models.ForeignKey(Calendar, on_delete=models.RESTRICT)

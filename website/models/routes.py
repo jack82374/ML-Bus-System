@@ -1,6 +1,6 @@
 from django.db import models
 
-from website.models.agency import Agency
+from website.models import Agency
 
 class Routes(models.Model):
     route_id = models.CharField(max_length=255, primary_key=True)

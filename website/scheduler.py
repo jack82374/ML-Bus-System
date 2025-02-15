@@ -11,11 +11,6 @@ from django.core.management import call_command
 scheduler = BackgroundScheduler(timezone=timezone.get_current_timezone())
 scheduler.add_jobstore(DjangoJobStore(), "default")
 
-'''def shutdown_handler(self, signal):
-    scheduler.shutdown()
-    print(f'Scheduler stopped')
-    sys.exit(0)'''
-
 #def run_get_gtfs():
 #    call_command('get_gtfs')
 
@@ -38,6 +33,3 @@ def start_scheduler():
             print(f"Scheduler started.")
         else:
             print(f"Scheduler is already running.")
-
-#signal.signal(signal.SIGINT, shutdown_handler)
-#signal.signal(signal.SIGTERM, shutdown_handler)

@@ -1,8 +1,6 @@
 from django.db import models
 
-from website.models.calendar import Calendar
-from website.models.routes import Routes
-from website.models.shapes import Shapes
+from website.models import Calendar, Routes
 
 class Trips(models.Model):
     route= models.ForeignKey(Routes, on_delete=models.RESTRICT)

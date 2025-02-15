@@ -9,4 +9,8 @@ from .stops import Stops
 from .trips import Trips
 from .gtfs_data import GTFSDataInfo
 from .trip_updates import TripUpdate
-from .vehicle_position import VehiclePosition
+from .vehicle_positions import VehiclePosition
+from .trip_updates import TripUpdate
+from .archive_stop_updates import ArchiveStopUpdate
+from .archive_trip_updates import ArchiveTripUpdate
+from .archive_vehicle_position import ArchiveVehiclePosition

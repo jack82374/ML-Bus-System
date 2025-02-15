@@ -1,18 +1,6 @@
 from django.db import models
 
-from website.models.stops import Stops
-from website.models.trips import Trips
-
-'''class UniqueStop(models.Model):  # New model for unique stop combinations
-    id = models.BigAutoField(primary_key=True)
-    trip = models.ForeignKey(Trips, on_delete=models.RESTRICT)  # Foreign key to Trip
-    stop_sequence = models.IntegerField()
-
-    class Contstraint:
-        unique_together = (('trip', 'stop_sequence'),)  # Define unique constraint
-
-    def __str__(self):
-        return f"{self.trip.trip_id} - Stop {self.stop_sequence}"'''
+from website.models import Stops, Trips
 
 class StopTimes(models.Model):
     #pk = models.CompositePrimaryKey("trip_id", "stop_sequence")
