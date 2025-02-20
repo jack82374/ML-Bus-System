@@ -4,7 +4,7 @@ from website.models import Routes, Trips
 
 class VehiclePosition(models.Model):
     #id = models.CharField(max_length=255, primary_key=True)
-    trip = models.ForeignKey(Trips, on_delete=models.CASCADE)
+    trip = models.OneToOneField(Trips, on_delete=models.CASCADE, primary_key=True)
     start_time = models.IntegerField()
     start_date = models.IntegerField()
     schedule_relationship = models.CharField(max_length=255)
@@ -13,7 +13,7 @@ class VehiclePosition(models.Model):
     latitude = models.FloatField()
     longitude = models.FloatField()
     timestamp = models.DateTimeField()
-    vehicle_id = models.IntegerField(primary_key=True)
+    vehicle_id = models.IntegerField(null=True, blank=True)
 
     def __str__(self):
         return f"{self.trip.trip_id} vehicle {self.vehicle_id} at location {self.longitude}, {self.latitude}."

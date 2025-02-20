@@ -4,12 +4,12 @@ from website.models import Routes, Trips
 class ArchiveTripUpdate(models.Model):
     #id = models.CharField(max_length=255, primary_key=True)
     trip = models.ForeignKey(Trips, on_delete=models.DO_NOTHING)
-    start_time = models.TimeField()
+    start_time = models.IntegerField()
     start_date = models.IntegerField()
     schedule_relationship = models.CharField(max_length=255)
     route = models.ForeignKey(Routes, on_delete=models.DO_NOTHING)
     direction_id = models.SmallIntegerField()
-    vehicle_id = models.IntegerField()
+    vehicle_id = models.IntegerField(null=True, blank=True)
     timestamp = models.DateTimeField()
 
     def __str__(self):
