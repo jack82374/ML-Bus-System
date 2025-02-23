@@ -1,14 +1,19 @@
-{% load static %}
+<!--{% load static %}-->
 <!doctype html>
 <html lang="en-GB">
   <head>
-    <script src="{% static 'maplibre-gl.js' %}"></script>
-  	<link href="{% static 'maplibre-gl.css' %}" rel="stylesheet" />
+    <!--<script src="{% static 'maplibre-gl.js' %}"></script>
+  	<link href="{% static 'maplibre-gl.css' %}" rel="stylesheet" /> -->
+    <script src="https://unpkg.com/maplibre-gl@^5.1.0/dist/maplibre-gl.js"></script>
+    <link href="https://unpkg.com/maplibre-gl@^5.1.0/dist/maplibre-gl.css" rel="stylesheet" />
     <meta charset="utf-8" />
     <title>My test page</title>
     <style>
       body { margin: 0; padding: 0; }
       html, body, #map { height: 100%; }
+      .hidden {
+        display: none;
+      }
     </style>
   </head>
   <body>
@@ -16,6 +21,8 @@
     <p>The test map is below</p>
     <div id="map"></div>
     <script>
+        var markers = [];
+        //var dynamic_markers = [];
         var map = new maplibregl.Map({
             container: 'map', // container id
             //style: 'https://demotiles.maplibre.org/style.json', // style URL
@@ -27,31 +34,69 @@
             center: [-8.4710, 51.8991], // starting position [lng, lat]
             zoom: 14 // starting zoom
         });
-
+      function fetchStops() {  
         fetch('/website/stops/')
           .then(response => response.json())
           .then(data => {
-            data.forEach(stop => {
-              //console.log(stop)
-              new maplibregl.Marker()
-                .setLngLat([stop.stop_lon, stop.stop_lat])
-                .setPopup(new maplibregl.Popup().setText(stop.stop_name))
-                .addTo(map);
+            markers = data.forEach(stop => {
+              const markerElement = document.createElement('div');
+              markerElement.className = 'marker';
+              markerElement.dataset.stopName = stop.stop_name;
+
+              const marker = new maplibregl.Marker({
+                  element: markerElement
+              })
+              .setLngLat([stop.stop_lon, stop.stop_lat])
+              .setPopup(new maplibregl.Popup().setText(stop.stop_name))
+              .addTo(map);
+              return { marker, markerElement };
             });
+            updateVisibleMarkers();
           });
+      }
+
+      function fetchLocations() {
+        var dynamic_markers = [];
         fetch('/website/locations/')
-          .then(response => response.json())
-          .then(data => {
-            data.entity.forEach(location => {
-              console.log(location);
-              string_to_display = location.id + " on trip " + location.vehicle.trip.trip_id;
-              //console.log(stop)
-              new maplibregl.Marker({color: "#FF0000"})
-                .setLngLat([location.vehicle.position.longitude, location.vehicle.position.latitude])
-                .setPopup(new maplibregl.Popup().setText(string_to_display),)
-                .addTo(map);
-            });
+        .then(response => response.json())
+        .then(data => {
+          dynamic_markers = data.forEach(position => {
+            const markerElement = document.createElement('div');
+            markerElement.className = 'marker';
+            markerElement.dataset.trip = position.trip;
+
+            const marker = new maplibregl.Marker({
+                element: markerElement
+            })
+            .setLngLat([position.longitude, position.latitude])
+            .setPopup(new maplibregl.Popup().setText(position.trip))
+            .addTo(map);
+            return { marker, markerElement };
           });
+          updateVisibleMarkers();
+        });
+        markers.concat(dynamic_markers)
+      }
+
+        function updateVisibleMarkers() {
+          const bounds = map.getBounds();
+          markers.forEach(({ marker, markerElement }) => {
+              const lngLat = marker.getLngLat();
+              if (bounds.contains(lngLat)) {
+                  markerElement.classList.remove('hidden');
+              } else {
+                  markerElement.classList.add('hidden');
+              }
+          });
+      }
+
+        fetchStops();
+        fetchLocations();
+
+        setInterval(fetchLocations, 30000);
+
+        map.on('move', updateVisibleMarkers);
+        map.on('zoom', updateVisibleMarkers);
     </script>
   </body>
 </html>

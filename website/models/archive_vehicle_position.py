@@ -4,11 +4,11 @@ from website.models import Routes, Trips
 
 class ArchiveVehiclePosition(models.Model):
     #id = models.CharField(max_length=255, primary_key=True)
-    trip = models.ForeignKey(Trips, on_delete=models.DO_NOTHING)
+    trip = models.ForeignKey(Trips, null=True, blank=True, on_delete=models.SET_NULL)
     start_time = models.IntegerField()
     start_date = models.IntegerField()
     schedule_relationship = models.CharField(max_length=255)
-    route = models.ForeignKey(Routes, on_delete=models.DO_NOTHING)
+    route = models.ForeignKey(Routes, null=True, blank=True, on_delete=models.SET_NULL)
     direction_id = models.SmallIntegerField()
     latitude = models.FloatField()
     longitude = models.FloatField()

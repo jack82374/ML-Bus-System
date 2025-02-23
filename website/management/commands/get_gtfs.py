@@ -1,10 +1,19 @@
 from datetime import datetime, timezone
+import hashlib
 import traceback
 import requests
 import json
 from django.core.management.base import BaseCommand
 from django.conf import settings  # Import settings for API key
 from website.models import TripUpdate, StopUpdate, VehiclePosition, ArchiveTripUpdate, ArchiveStopUpdate, ArchiveVehiclePosition, Trips, Stops, Routes
+
+def generate_unique_identifier(start_time, start_date, route_id, direction_id):
+    # Combine the attributes into a single string
+    uniq_day = (datetime(1970, 1, 1) - datetime.now()).days
+    unique_string = f"{start_time}_{start_date}_{route_id}_{direction_id}_{uniq_day}"
+    # Create a hash of the string to generate a unique identifier
+    unique_hash = hashlib.md5(unique_string.encode()).hexdigest()
+    return unique_hash
 
 class Command(BaseCommand):
     help = 'Fetches GTFS Realtime data'
@@ -43,9 +52,50 @@ class Command(BaseCommand):
             # Process the JSON data
             #print(trip_updates)
             #print(locations)
+            now = datetime.now()
+            trip_id_mapping = {} # Map new trip_id's from Vehicles to TripUpdates (WHY NOT HAVE THEM IN BOTH!?)
+            for location in locations.get('entity', []):
+                location_trip_data = location['vehicle']['trip']
+                location_unique_key = f"{location_trip_data['start_time']}_{location_trip_data['start_date']}_{location_trip_data['route_id']}_{location_trip_data['direction_id']}"
+                if (location['vehicle']['trip']['schedule_relationship'] == 'ADDED'):
+                    trip_id_mapping[location_unique_key] = location['vehicle']['trip']['trip_id']
+                    trip_id = Trips.objects.get_or_create(
+                        trip = location['vehicle']['trip']['trip_id'],
+                        defaults={
+                            'direction_id': location['vehicle']['trip']['direction_id'],
+                            'route': location['vehicle']['trip']['route_id']
+                    }
+                )
+                else:
+                    trip_id = Trips.object.get(location['vehicle']['trip']['trip_id'])
+                start_full = str(location['vehicle']['trip']['start_time'])
+                start_hour, start_minute, start_second = map(int, start_full.split(":"))
+                start_total_seconds = (start_hour*60*60) + (start_minute*60) + start_second
+                location_timestamp = datetime.fromtimestamp(int(location['vehicle']['timestamp']), tz=timezone.utc)
+                VehiclePosition.objects.update_or_create(
+                    trip = trip_id,
+                    defaults={
+                    'start_time': start_total_seconds,
+                    'start_date': location['vehicle']['trip']['start_date'],
+                    'schedule_relationship': location['vehicle']['trip']['schedule_relationship'],
+                    'route': Routes.object.get(location['vehicle']['trip']['route_id']),
+                    'direction_id': location['vehicle']['trip']['trip_id'],
+                    'latitude': location['vehicle']['position']['latitude'],
+                    'longitude': location['vehicle']['position']['longitude'],
+                    'timestamp': location_timestamp,
+                    'vehicle_id': location['vehicle']['id']
+                    }
+                )
+
             for update in trip_updates.get('entity', []):
                 #print(update['trip_update']['trip']['trip_id'])
-                trip = Trips.objects.get(trip_id=update['trip_update']['trip']['trip_id'])
+                update_trip_data = location['vehicle']['trip']
+                update_unique_key = f"{update_trip_data['start_time']}_{update_trip_data['start_date']}_{update_trip_data['route_id']}_{update_trip_data['direction_id']}"
+                if (update['trip_update']['trip']['schedule_relationship'] == 'ADDED'):
+                    trip_id = trip_id_mapping[update_unique_key]
+                else:
+                    trip_id=update['trip_update']['trip']['trip_id']
+                trip = Trips.objects.get(trip_id=trip_id)
                 route = Routes.objects.get(route_id=update['trip_update']['trip']['route_id'])
                 start_trip_full = str(update['trip_update']['trip']['start_time'])
                 start_trip_hour, start_trip_minute, start_trip_second = map(int, start_trip_full.split(":"))
@@ -60,7 +110,8 @@ class Command(BaseCommand):
                                           'route': route,
                                           'direction_id': update['trip_update']['trip']['direction_id'],
                                           'vehicle_id': vehicle_id,
-                                          'timestamp':  update_timestamp
+                                          'timestamp':  update_timestamp,
+                                          'day': now.weekday()
                                           }
                                           )
                 ArchiveTripUpdate.objects.create(trip = trip, 
@@ -70,7 +121,8 @@ class Command(BaseCommand):
                                           route = route,
                                           direction_id = update['trip_update']['trip']['direction_id'],
                                           vehicle_id = vehicle_id,
-                                          timestamp = update_timestamp
+                                          timestamp = update_timestamp,
+                                          day = now.weekday()
                                           )
                 i = 0
                 for stop in update['trip_update'].get('stop_time_update', []):
@@ -118,25 +170,7 @@ class Command(BaseCommand):
                         # Deleting older stop updates. Find a better way to do this, this is terrible
 
             
-            for location in locations.get('entity', []):
-                start_full = str(location['vehicle']['trip']['start_time'])
-                start_hour, start_minute, start_second = map(int, start_full.split(":"))
-                start_total_seconds = (start_hour*60*60) + (start_minute*60) + start_second
-                location_timestamp = datetime.fromtimestamp(int(location['vehicle']['timestamp']), tz=timezone.utc)
-                VehiclePosition.objects.update_or_create(
-                    trip = Trips.objects.get(location['vehicle']['trip']['trip_id']),
-                    defaults={
-                    'start_time': start_total_seconds,
-                    'start_date': location['vehicle']['trip']['start_date'],
-                    'schedule_relationship': location['vehicle']['trip']['trip_id'],
-                    'route': Routes.object.get(location['vehicle']['trip']['route_id']),
-                    'direction_id': location['vehicle']['trip']['trip_id'],
-                    'latitude': location['vehicle']['position']['latitude'],
-                    'longitude': location['vehicle']['position']['longitude'],
-                    'timestamp': location_timestamp,
-                    'vehicle_id': location['vehicle']['id']
-                    }
-                )
+            
 
             print(f"Location updates saved to models and DB")
         except requests.exceptions.RequestException as e:

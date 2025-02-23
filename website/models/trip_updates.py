@@ -12,6 +12,7 @@ class TripUpdate(models.Model):
     direction_id = models.SmallIntegerField()
     vehicle_id = models.IntegerField(null=True, blank=True)
     timestamp = models.DateTimeField()
+    day = models.SmallIntegerField()
 
     def __str__(self):
         return f"{self.trip.trip_id} updated at {self.timestamp}."
