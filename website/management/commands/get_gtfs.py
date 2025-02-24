@@ -60,14 +60,15 @@ class Command(BaseCommand):
                 if (location['vehicle']['trip']['schedule_relationship'] == 'ADDED'):
                     trip_id_mapping[location_unique_key] = location['vehicle']['trip']['trip_id']
                     trip_id = Trips.objects.get_or_create(
-                        trip = location['vehicle']['trip']['trip_id'],
+                        trip_id = location['vehicle']['trip']['trip_id'],
                         defaults={
                             'direction_id': location['vehicle']['trip']['direction_id'],
-                            'route': location['vehicle']['trip']['route_id']
+                            'route': Routes.objects.get(route_id=location['vehicle']['trip']['route_id'])
                     }
                 )
                 else:
-                    trip_id = Trips.object.get(location['vehicle']['trip']['trip_id'])
+                    trip_id = Trips.objects.get(trip_id=location['vehicle']['trip']['trip_id'])
+                print(location['vehicle']['trip']['start_time'])
                 start_full = str(location['vehicle']['trip']['start_time'])
                 start_hour, start_minute, start_second = map(int, start_full.split(":"))
                 start_total_seconds = (start_hour*60*60) + (start_minute*60) + start_second
@@ -78,12 +79,12 @@ class Command(BaseCommand):
                     'start_time': start_total_seconds,
                     'start_date': location['vehicle']['trip']['start_date'],
                     'schedule_relationship': location['vehicle']['trip']['schedule_relationship'],
-                    'route': Routes.object.get(location['vehicle']['trip']['route_id']),
-                    'direction_id': location['vehicle']['trip']['trip_id'],
+                    'route': Routes.objects.get(route_id=location['vehicle']['trip']['route_id']),
+                    'direction_id': location['vehicle']['trip']['direction_id'],
                     'latitude': location['vehicle']['position']['latitude'],
                     'longitude': location['vehicle']['position']['longitude'],
                     'timestamp': location_timestamp,
-                    'vehicle_id': location['vehicle']['id']
+                    'vehicle_id': location['vehicle'].get('id')
                     }
                 )
 

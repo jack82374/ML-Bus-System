@@ -7,7 +7,7 @@ from datetime import datetime
 from django.conf import settings
 from django.utils import timezone
 from django.core.management.base import BaseCommand
-from website.models import Routes, Stops, Trips, StopTimes, Calendar, CalendarDates, Agency, Shapes, FeedInfo, GTFSDataInfo
+from website.models import Routes, Stops, Trips, StopTimes, Calendar, CalendarDates, Agency, Shapes, FeedInfo, GTFSDataInfo, SiteSettings
 
 #import hashlib
 
@@ -45,9 +45,14 @@ class Command(BaseCommand):
             #if hasattr(settings, 'GTFS_STATIC_MOD_DATE') and settings.GTFS_STATIC_MOD_DATE:
             if last_modified_date and (gtfs_info.last_modified is None or last_modified_date > gtfs_info.last_modified):
                 self.stdout.write(self.style.NOTICE(f'GTFS Static Files Update Detected'))
+                settings = SiteSettings.objects.first()
+                settings.maintenance_mode = True
+                settings.save() # Enable maintence mode
                 self.import_gtfs_data(url)
                 gtfs_info.last_modified = last_modified_date
                 gtfs_info.save()
+                settings.maintenance_mode = False
+                settings.save() # Disable maintence mode
             else:
                 self.stdout.write(self.style.NOTICE(f'No GTFS Static Files Update Detected'))
         except requests.exceptions.RequestException as e:
