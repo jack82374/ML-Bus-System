@@ -1,4 +1,4 @@
-<!--{% load static %}-->
+{% load static %}
 <!doctype html>
 <html lang="en-GB">
   <head>
@@ -38,10 +38,13 @@
         fetch('/website/stops/')
           .then(response => response.json())
           .then(data => {
+            const bus_img = new Image(25, 25); // Set the desired size
+            bus_img.src = "{% static 'images/bus.svg' %}" alt="Moving Bus Icon">
             markers = data.forEach(stop => {
               const markerElement = document.createElement('div');
               markerElement.className = 'marker';
               markerElement.dataset.stopName = stop.stop_name;
+              markerElement.appendChild(bus_img);
 
               const marker = new maplibregl.Marker({
                   element: markerElement
@@ -60,10 +63,13 @@
         fetch('/website/locations/')
         .then(response => response.json())
         .then(data => {
+          const marker_img = new Image(25, 25); // Set the desired size
+          marker_img.src = "{% static 'images/bus_stop.svg' %}" alt="Bus Stop Icon">
           dynamic_markers = data.forEach(position => {
             const markerElement = document.createElement('div');
             markerElement.className = 'marker';
             markerElement.dataset.trip = position.trip;
+            markerElement.appendChild(marker_img);
 
             const marker = new maplibregl.Marker({
                 element: markerElement

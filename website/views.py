@@ -4,7 +4,7 @@ from django.conf import settings
 from django.http import HttpResponse, JsonResponse
 from django.template import loader
 import requests
-from .models import Stops, Agency, Routes
+from .models import Stops, Agency, Routes, VehiclePosition
 
 
 def index(request):
@@ -20,7 +20,10 @@ def get_stops(request):
     return JsonResponse(list(stops), safe=False)
 
 def get_locations(request):
-    try:
+    positions = VehiclePosition.objects.all()
+    return JsonResponse(list(positions), safe=False)
+'''
+    #try:
             # Construct the API URL
             api_url = settings.GTFS_REALTIME_API_URL  # Store URL in settings
             if not api_url:
@@ -52,7 +55,7 @@ def get_locations(request):
             #return location_json
             return JsonResponse(location_json, safe=False)
             # Process the JSON data
-            '''i = 0
+            i = 0
             for update in data['entity']:
                 print(f'{update}\n')
                 i = i+1
@@ -62,10 +65,10 @@ def get_locations(request):
             for location in location_json['entity']:
                 print(f'{location}\n')
                 j = j+1
-            print(f"There are {j} location updates per API call")'''
+            print(f"There are {j} location updates per API call")
     except requests.exceptions.RequestException as e:
         print(f'Error fetching GTFS data: {e}')
     except json.JSONDecodeError as e:
         print(f'Error decoding JSON: {e} - Response Text: {response.text}')
     except Exception as e:
-        print(f'An unexpected error occurred: {e}')
+        print(f'An unexpected error occurred: {e}')'''
