@@ -7,5 +7,5 @@ class MaintenanceModeMiddleware:
 
     def __call__(self, request):
         if SiteSettings.objects.first().maintenance_mode:
-            return render(request, 'maintenance.html', status=503)
+            return render(request, 'website/maintenance.html', status=503)
         return self.get_response(request)

@@ -6,8 +6,10 @@ import io
 from datetime import datetime
 from django.conf import settings
 from django.utils import timezone
+from django.core.exceptions import ObjectDoesNotExist
 from django.core.management.base import BaseCommand
-from website.models import Routes, Stops, Trips, StopTimes, Calendar, CalendarDates, Agency, Shapes, FeedInfo, GTFSDataInfo, SiteSettings
+from website.models import Routes, Stops, Trips, StopTimes, Calendar, CalendarDates, \
+    Agency, Shapes, FeedInfo, GTFSDataInfo, SiteSettings, TripUpdate, VehiclePosition, StopUpdate, ArchiveTripUpdate, ArchiveVehiclePosition, ArchiveStopUpdate
 
 #import hashlib
 
@@ -45,7 +47,10 @@ class Command(BaseCommand):
             #if hasattr(settings, 'GTFS_STATIC_MOD_DATE') and settings.GTFS_STATIC_MOD_DATE:
             if last_modified_date and (gtfs_info.last_modified is None or last_modified_date > gtfs_info.last_modified):
                 self.stdout.write(self.style.NOTICE(f'GTFS Static Files Update Detected'))
-                maintence_settings = SiteSettings.objects.first()
+                try:
+                    maintence_settings = SiteSettings.objects.get()
+                except SiteSettings.DoesNotExist:
+                    maintence_settings = SiteSettings.objects.create()
                 maintence_settings.maintenance_mode = True
                 maintence_settings.save() # Enable maintence mode
                 self.import_gtfs_data(url)
@@ -67,7 +72,9 @@ class Command(BaseCommand):
 
             with zipfile.ZipFile(io.BytesIO(response.content)) as zip_file:
                 #Process files in correct order
-                models_to_delete = [StopTimes, Trips, Routes, CalendarDates, Calendar, Stops, Agency, Shapes] #Order is important as the ones at the start depend on the ones at the end
+                models_to_delete = [StopTimes, Trips, Routes, CalendarDates, Calendar, Stops, Agency, Shapes,\
+                                    TripUpdate, VehiclePosition, StopUpdate, ArchiveTripUpdate, ArchiveVehiclePosition, ArchiveStopUpdate ] 
+                # Order is important as the ones at the start depend on the ones at the end
                 for model in models_to_delete:
                     deleted_count, _ = model.objects.all().delete()
                     self.stdout.write(self.style.SUCCESS(f'Successfully deleted {deleted_count} {model.__name__} objects'))
@@ -105,13 +112,14 @@ class Command(BaseCommand):
             objs = []
             for row in reader:
                 try:
-                    
-                    if model_name == 'routes':
+                    # Consider limiting this to just the 208 and 205
+                    if model_name == 'routes' and (row.get('route_id') == '4497_87337' or row.get('route_id') == '4497_87340'):
+                        #print(row)
                         agency_id = row.get('agency_id')
                         agency_instance = Agency.objects.get(agency_id=agency_id) if agency_id else None
                         #model.objects.create(agency = agency_instance, **{k: v for k, v in row.items() if k != 'agency_id'})
                         objs.append(model(agency = agency_instance, **{k: v for k, v in row.items() if k != 'agency_id'}))
-                    elif model_name == 'trips':
+                    elif model_name == 'trips' and (row.get('route_id') == '4497_87337' or row.get('route_id') == '4497_87340'):
                         route_id = row.get('route_id')
                         service_id = row.get('service_id')
                         #shape_id = row.get('shape_id')
@@ -157,12 +165,16 @@ class Command(BaseCommand):
                         row['location_type'] = location_type
                         #model.objects.create(**row)
                         objs.append(model(**row))
-                    else:
+                    elif model_name == 'agency':
+                        if (int(row.get('agency_id')) == 7778020):
+                            objs.append(model(**row))
+                    elif model_name != 'agency' and model_name != 'trips' and model_name != 'routes':
                         #model.objects.create(**row)
                         objs.append(model(**row))
                     #self.stdout.write(self.style.SUCCESS(f'{model_name} data imported succesfully!'))
-                except Exception as e:
-                    self.stderr.write(self.style.ERROR(f"Error importing row: {row} into {model_name}: {e}"))
+                except ObjectDoesNotExist as e:
+                    #self.stderr.write(self.style.ERROR(f"Error importing row: {row} into {model_name}: {e} of type {e.__class__.__name__}"))
+                    pass
             if objs:
                     model.objects.bulk_create(objs, batch_size=100000)
                     self.stdout.write(self.style.SUCCESS(f'{model_name} data imported succesfully!'))

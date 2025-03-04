@@ -2,26 +2,27 @@
 <!doctype html>
 <html lang="en-GB">
   <head>
-    <!--<script src="{% static 'maplibre-gl.js' %}"></script>
-  	<link href="{% static 'maplibre-gl.css' %}" rel="stylesheet" /> -->
-    <script src="https://unpkg.com/maplibre-gl@^5.1.0/dist/maplibre-gl.js"></script>
-    <link href="https://unpkg.com/maplibre-gl@^5.1.0/dist/maplibre-gl.css" rel="stylesheet" />
+    <script src="{% static 'maplibre-gl.js' %}"></script>
+  	<link href="{% static 'maplibre-gl.css' %}" rel="stylesheet" />
+    <!--<script src="https://unpkg.com/maplibre-gl@^5.1.0/dist/maplibre-gl.js"></script>
+    <link href="https://unpkg.com/maplibre-gl@^5.1.0/dist/maplibre-gl.css" rel="stylesheet" />-->
     <meta charset="utf-8" />
-    <title>My test page</title>
+    <title>ML Bus</title>
     <style>
-      body { margin: 0; padding: 0; }
+      body { margin: 0; padding: 0; text-align: center;}
       html, body, #map { height: 100%; }
-      .hidden {
+      /*.hidden {
         display: none;
-      }
+      }*/
     </style>
   </head>
   <body>
-    <p>This is my page</p>
-    <p>The test map is below</p>
+    <h1>Welcome to the ML Bus System</h1>
+    <h2>The map below displays live buses. 205 buses are red, 208 buses are blue!</h2>
     <div id="map"></div>
     <script>
         var markers = [];
+        var dynamic_markers = [];
         //var dynamic_markers = [];
         var map = new maplibregl.Map({
             container: 'map', // container id
@@ -38,13 +39,14 @@
         fetch('/website/stops/')
           .then(response => response.json())
           .then(data => {
-            const bus_img = new Image(25, 25); // Set the desired size
-            bus_img.src = "{% static 'images/bus.svg' %}" alt="Moving Bus Icon">
-            markers = data.forEach(stop => {
+            const stop_img = new Image(20, 20); // Set the desired size
+            stop_img.src = "{% static '/images/bus_stop_black.svg' %}";
+            stop_img.alt = "Bus Stop Icon";
+            markers = data.map(stop => {
               const markerElement = document.createElement('div');
-              markerElement.className = 'marker';
+              markerElement.appendChild(stop_img.cloneNode(true));
+              markerElement.className = 'stop_marker';
               markerElement.dataset.stopName = stop.stop_name;
-              markerElement.appendChild(bus_img);
 
               const marker = new maplibregl.Marker({
                   element: markerElement
@@ -54,55 +56,97 @@
               .addTo(map);
               return { marker, markerElement };
             });
-            updateVisibleMarkers();
+            //updateVisibleMarkers();
           });
       }
 
+      const call_locations = setInterval(fetchLocations, 30000);
+
       function fetchLocations() {
-        var dynamic_markers = [];
+        dynamic_markers.forEach(markerEntry => {
+          markerEntry.marker.remove();
+        });
+        //var dynamic_markers = [];
         fetch('/website/locations/')
         .then(response => response.json())
         .then(data => {
-          const marker_img = new Image(25, 25); // Set the desired size
-          marker_img.src = "{% static 'images/bus_stop.svg' %}" alt="Bus Stop Icon">
-          dynamic_markers = data.forEach(position => {
-            const markerElement = document.createElement('div');
-            markerElement.className = 'marker';
-            markerElement.dataset.trip = position.trip;
-            markerElement.appendChild(marker_img);
+          const five_bus_img = new Image(20, 20); // Set the desired size
+          five_bus_img.src = "{% static '/images/bus_red.svg' %}";
+          five_bus_img.alt = "205 Red Moving Bus Icon";
 
+          const eight_bus_img = new Image(20, 20); // Set the desired size
+          eight_bus_img.src = "{% static '/images/bus_blue.svg' %}";
+          eight_bus_img.alt = "205 Red Moving Bus Icon";
+
+          dynamic_markers = data.map(position => { 
+            const markerElement = document.createElement('div');
+            if (position.route_id == '4497_87337') {
+            const location_string = position.trip_id.concat(" on route ", "205");
+            markerElement.appendChild(five_bus_img.cloneNode(true));
+            markerElement.className = 'bus_marker';
+            markerElement.dataset.trip = position.trip_id;
+    
             const marker = new maplibregl.Marker({
                 element: markerElement
             })
             .setLngLat([position.longitude, position.latitude])
-            .setPopup(new maplibregl.Popup().setText(position.trip))
+            .setPopup(new maplibregl.Popup().setText(location_string))
             .addTo(map);
             return { marker, markerElement };
+          }
+            else if (position.route_id == '4497_87340') {
+            const location_string = position.trip_id.concat(" on route ", "208");
+            markerElement.appendChild(eight_bus_img.cloneNode(true));
+            markerElement.className = 'bus_marker';
+            markerElement.dataset.trip = position.trip_id;
+    
+            const marker = new maplibregl.Marker({
+                element: markerElement
+            })
+            .setLngLat([position.longitude, position.latitude])
+            .setPopup(new maplibregl.Popup().setText(location_string))
+            .addTo(map);
+            return { marker, markerElement };
+            }
           });
-          updateVisibleMarkers();
+          //updateVisibleMarkers();
         });
-        markers.concat(dynamic_markers)
+        //markers = markers.concat(dynamic_markers)
       }
 
-        function updateVisibleMarkers() {
+        /*function updateVisibleMarkers() {
+          const currentZoom = map.getZoom();
           const bounds = map.getBounds();
           markers.forEach(({ marker, markerElement }) => {
-              const lngLat = marker.getLngLat();
-              if (bounds.contains(lngLat)) {
-                  markerElement.classList.remove('hidden');
-              } else {
-                  markerElement.classList.add('hidden');
+              if (currentZoom < 10 && markerElement.className == 'bus_marker') {
+                markerElement.classList.add('hidden'); // Hide the markers
               }
+              else if (currentZoom < 7 && markerElement.className == 'stop_marker') {
+                markerElement.classList.add('hidden'); // Hide the markers
+              }
+              //else {
+              //  markerElement.classList.remove('hidden'); // Show the marker
+              //}
+              const lngLat = marker.getLngLat();
+              if (bounds.contains(lngLat) && currentZoom > 7 && markerElement.className == 'stop_marker') {
+                  markerElement.classList.remove('hidden');
+              }
+              else if (bounds.contains(lngLat) && currentZoom > 10 && markerElement.className == 'bus_marker') {
+                markerElement.classList.remove('hidden');
+              }
+              //else {
+              //    markerElement.classList.add('hidden');
+              //}
           });
-      }
+      }*/
 
         fetchStops();
         fetchLocations();
 
-        setInterval(fetchLocations, 30000);
+        
 
-        map.on('move', updateVisibleMarkers);
-        map.on('zoom', updateVisibleMarkers);
+        //map.on('move', updateVisibleMarkers);
+        //map.on('zoom', updateVisibleMarkers);
     </script>
   </body>
 </html>

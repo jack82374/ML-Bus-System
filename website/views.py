@@ -4,7 +4,7 @@ from django.conf import settings
 from django.http import HttpResponse, JsonResponse
 from django.template import loader
 import requests
-from .models import Stops, Agency, Routes, VehiclePosition
+from .models import Stops, Trips, VehiclePosition
 
 
 def index(request):
@@ -13,14 +13,20 @@ def index(request):
     return HttpResponse(template.render(None, request))
 
 def get_stops(request):
-    stops = Stops.objects.all().values('stop_name', 'stop_desc', 'stop_lat', 'stop_lon')
+    relevant_route_ids = ['4497_87337', '4497_87340']
+    stops = Stops.objects.filter(
+        stoptimes__trip__route_id__in=relevant_route_ids
+    ).distinct().values('stop_name', 'stop_desc', 'stop_lat', 'stop_lon')
     #luas_agency = Agency.objects.get(agency_name="LUAS")
     #luas_routes = Routes.objects.filter(agency=luas_agency)
     #stops = Stops.objects.filter(stoptimes__route__agency_trip_route=luas_routes).distinct().values('stop_name', 'stop_desc', 'stop_lat', 'stop_lon')
     return JsonResponse(list(stops), safe=False)
 
 def get_locations(request):
-    positions = VehiclePosition.objects.all()
+    relevant_route_ids = ['4497_87337', '4497_87340']
+    positions = VehiclePosition.objects.filter(
+        trip_id__in=Trips.objects.filter(route_id__in=relevant_route_ids).values_list('trip_id', flat=True)
+    ).values('trip_id', 'direction_id', 'latitude', 'longitude', 'timestamp', 'route_id', 'vehicle_id')
     return JsonResponse(list(positions), safe=False)
 '''
     #try:
