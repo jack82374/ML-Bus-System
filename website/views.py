@@ -1,14 +1,14 @@
 #from django.shortcuts import render
+from collections import defaultdict
 import json
 from django.conf import settings
 from django.http import HttpResponse, JsonResponse
 from django.template import loader
 import requests
-from .models import Stops, Trips, VehiclePosition
+from .models import Stops, Trips, VehiclePosition, Shapes
 
 
 def index(request):
-    #return HttpResponse("Hello, world. You're at the website index.")
     template = loader.get_template("website/index.html")
     return HttpResponse(template.render(None, request))
 
@@ -17,9 +17,6 @@ def get_stops(request):
     stops = Stops.objects.filter(
         stoptimes__trip__route_id__in=relevant_route_ids
     ).distinct().values('stop_name', 'stop_desc', 'stop_lat', 'stop_lon')
-    #luas_agency = Agency.objects.get(agency_name="LUAS")
-    #luas_routes = Routes.objects.filter(agency=luas_agency)
-    #stops = Stops.objects.filter(stoptimes__route__agency_trip_route=luas_routes).distinct().values('stop_name', 'stop_desc', 'stop_lat', 'stop_lon')
     return JsonResponse(list(stops), safe=False)
 
 def get_locations(request):
@@ -28,53 +25,28 @@ def get_locations(request):
         trip_id__in=Trips.objects.filter(route_id__in=relevant_route_ids).values_list('trip_id', flat=True)
     ).values('trip_id', 'direction_id', 'latitude', 'longitude', 'timestamp', 'route_id', 'vehicle_id')
     return JsonResponse(list(positions), safe=False)
-'''
-    #try:
-            # Construct the API URL
-            api_url = settings.GTFS_REALTIME_API_URL  # Store URL in settings
-            if not api_url:
-                raise ValueError("GTFS_REALTIME_API_URL not set in settings.py")
-            headers = {}
-            if hasattr(settings, 'GTFS_REALTIME_API_KEY') and settings.GTFS_REALTIME_API_KEY:
-                headers['x-api-key'] = f'{settings.GTFS_REALTIME_API_KEY}'
-                headers['Cache-Control'] = 'no-cache'
-                #headers['format'] = 'json'
 
-            response = requests.get(api_url, headers=headers, timeout=10) # Timeout after 10 seconds
+def get_shapes(request):
+    relevant_route_ids = ['4497_87337', '4497_87340']
+    shape_route_mapping = Trips.objects.filter(
+        route_id__in=relevant_route_ids
+    ).values_list('shape_id', 'route_id').distinct()
 
-            response.raise_for_status()  # Raise an exception for bad status codes (4xx or 5xx)
+    shape_to_route = {shape_id: route_id for shape_id, route_id in shape_route_mapping}
 
-            locations_url = settings.GTFS_REALTIME_LOCATIONS_URL
-            if not locations_url:
-                raise ValueError("GTFS_REALTIME_LOCATIONS_URL not set in settings.py")
-            headers = {}
-            if hasattr(settings, 'GTFS_REALTIME_API_KEY') and settings.GTFS_REALTIME_API_KEY:
-                headers['x-api-key'] = f'{settings.GTFS_REALTIME_API_KEY}'
-                headers['Cache-Control'] = 'no-cache'
-                #headers['format'] = 'json'
+    shapes_data = Shapes.objects.filter(
+        shape_id__in=shape_to_route.keys()
+    ).values('shape_id', 'shape_pt_lat', 'shape_pt_lon')
 
-            locations = requests.get(locations_url, headers=headers, timeout=10) # Timeout after 10 seconds
+    shapes_dict = defaultdict(list)
+    for shape in shapes_data:
+        shapes_dict[shape['shape_id']].append({
+            'lat': shape['shape_pt_lat'],
+            'lon': shape['shape_pt_lon']
+        })
 
-            locations.raise_for_status()  # Raise an exception for bad status codes (4xx or 5xx)
-            data = response.json()
-            location_json = locations.json()
-            #return location_json
-            return JsonResponse(location_json, safe=False)
-            # Process the JSON data
-            i = 0
-            for update in data['entity']:
-                print(f'{update}\n')
-                i = i+1
-            print(f"There are {i} updates per API call")
-
-            j = 0
-            for location in location_json['entity']:
-                print(f'{location}\n')
-                j = j+1
-            print(f"There are {j} location updates per API call")
-    except requests.exceptions.RequestException as e:
-        print(f'Error fetching GTFS data: {e}')
-    except json.JSONDecodeError as e:
-        print(f'Error decoding JSON: {e} - Response Text: {response.text}')
-    except Exception as e:
-        print(f'An unexpected error occurred: {e}')'''
+    shapes_list = [
+        {'shape_id': shape_id, 'route_id': shape_to_route[shape_id], 'coordinates': coords}
+        for shape_id, coords in shapes_dict.items()
+    ]
+    return JsonResponse(shapes_list, safe=False)

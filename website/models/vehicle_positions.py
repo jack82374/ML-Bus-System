@@ -9,7 +9,7 @@ class VehiclePosition(models.Model):
     start_date = models.IntegerField()
     schedule_relationship = models.CharField(max_length=255)
     route = models.ForeignKey(Routes, on_delete=models.CASCADE)
-    direction_id = models.SmallIntegerField()
+    direction_id = models.SmallIntegerField() # 208: 0 is towards hospice, 1 is towards Mayfield. 205: 0 is towards MTU, 1 is towards the station
     latitude = models.FloatField()
     longitude = models.FloatField()
     timestamp = models.DateTimeField()

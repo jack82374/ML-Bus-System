@@ -10,7 +10,7 @@ class Shapes(models.Model):
     shape_dist_traveled = models.FloatField()
 
     class Constraint:
-        unique_together = (('shape_id', 'shape_pt_sequence'),)
+        unique_together = (('shape_id', 'shape_pt_lat', 'shape_pt_lat'),)
 
     def __str__(self):
         return f"{self.shape_id} - {self.shape_pt_sequence}"

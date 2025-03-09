@@ -2,7 +2,6 @@ from django.db import models
 from website.models import Routes, Trips
 
 class ArchiveTripUpdate(models.Model):
-    #id = models.CharField(max_length=255, primary_key=True)
     #trip = models.ForeignKey(Trips, null=True, blank=True, on_delete=models.SET_NULL)
     trip_id = models.CharField(max_length=255)
     start_time = models.IntegerField()
@@ -13,7 +12,7 @@ class ArchiveTripUpdate(models.Model):
     direction_id = models.SmallIntegerField()
     vehicle_id = models.IntegerField(null=True, blank=True)
     timestamp = models.DateTimeField()
-    day = models.SmallIntegerField()
+    day = models.SmallIntegerField() # 0-6 corresponding to Monday through Sunday
 
     def __str__(self):
         return f"{self.trip.trip_id} was updated at {self.timestamp}."
