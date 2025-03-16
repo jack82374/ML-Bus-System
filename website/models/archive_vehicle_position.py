@@ -8,7 +8,7 @@ class ArchiveVehiclePosition(models.Model):
     trip_id = models.CharField(max_length=255)
     start_time = models.IntegerField()
     start_date = models.IntegerField()
-    schedule_relationship = models.CharField(max_length=255)
+    schedule_relationship = models.CharField(max_length=255, null=True, blank=True)
     #route = models.ForeignKey(Routes, null=True, blank=True, on_delete=models.SET_NULL)
     route_id = models.CharField(max_length=255)
     direction_id = models.SmallIntegerField()

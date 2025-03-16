@@ -3,6 +3,7 @@ from collections import defaultdict
 import json
 from django.conf import settings
 from django.http import HttpResponse, JsonResponse
+from django.shortcuts import get_object_or_404, render
 from django.template import loader
 import requests
 from .models import Stops, Trips, VehiclePosition, Shapes
@@ -13,21 +14,21 @@ def index(request):
     return HttpResponse(template.render(None, request))
 
 def get_stops(request):
-    relevant_route_ids = ['4497_87337', '4497_87340']
+    relevant_route_ids = ['90255', '90258']
     stops = Stops.objects.filter(
         stoptimes__trip__route_id__in=relevant_route_ids
-    ).distinct().values('stop_name', 'stop_desc', 'stop_lat', 'stop_lon')
+    ).distinct().values('stop_name', 'stop_desc', 'stop_lat', 'stop_lon', 'stop_id')
     return JsonResponse(list(stops), safe=False)
 
 def get_locations(request):
-    relevant_route_ids = ['4497_87337', '4497_87340']
+    relevant_route_ids = ['90255', '90258']
     positions = VehiclePosition.objects.filter(
         trip_id__in=Trips.objects.filter(route_id__in=relevant_route_ids).values_list('trip_id', flat=True)
     ).values('trip_id', 'direction_id', 'latitude', 'longitude', 'timestamp', 'route_id', 'vehicle_id')
     return JsonResponse(list(positions), safe=False)
 
 def get_shapes(request):
-    relevant_route_ids = ['4497_87337', '4497_87340']
+    relevant_route_ids = ['90255', '90258']
     shape_route_mapping = Trips.objects.filter(
         route_id__in=relevant_route_ids
     ).values_list('shape_id', 'route_id').distinct()
@@ -50,3 +51,8 @@ def get_shapes(request):
         for shape_id, coords in shapes_dict.items()
     ]
     return JsonResponse(shapes_list, safe=False)
+
+def stop_entries(request, stop_id):
+    print(stop_id)
+    stop = get_object_or_404(Stops, stop_id=stop_id)
+    return render(request, 'website/stop_entries.html', {'stop': stop})

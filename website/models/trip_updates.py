@@ -9,7 +9,7 @@ class TripUpdate(models.Model):
     # old trip data that can build up
     start_time = models.IntegerField()
     start_date = models.IntegerField()
-    schedule_relationship = models.CharField(max_length=255)
+    schedule_relationship = models.CharField(max_length=255, null=True, blank=True)
     route = models.ForeignKey(Routes, on_delete=models.CASCADE)
     direction_id = models.SmallIntegerField()
     vehicle_id = models.IntegerField(null=True, blank=True)

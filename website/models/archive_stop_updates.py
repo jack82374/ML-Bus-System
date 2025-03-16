@@ -12,7 +12,7 @@ class ArchiveStopUpdate(models.Model):
     departure_delay = models.IntegerField(null=True, blank=True)
     #stop_id = models.ForeignKey(Stops, null=True, blank=True, on_delete=models.SET_NULL)
     stop_id = models.CharField(max_length=255)
-    schedule_relationship = models.CharField(max_length=255)
+    schedule_relationship = models.CharField(max_length=255, null=True, blank=True)
 
     def __str__(self):
         return f"{self.stop_sequence} at {self.arrival_time}."

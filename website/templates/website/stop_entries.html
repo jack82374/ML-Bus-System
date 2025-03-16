@@ -1,0 +1,30 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Stop Detail</title>
+    <style>
+        body { margin: 0; padding: 0; text-align: center; font-family: Helvetica, Arial, sans-serif; }
+    </style>
+</head>
+<body>
+    <h1>Stop Name: {{ stop.stop_name }}</h1>
+    <p>Stop ID: {{ stop.stop_id }}</p>
+    <p>Stop Description: {{ stop.stop_desc }}</p>
+    <p>Location:
+        Lon: {{ stop.stop_lon }}
+        Lat: {{ stop.stop_lat }}</p>
+    <table>
+        <tr>
+            <th>Route</th>
+            <th>Timetabled Arrival Time</th>
+            <th>Machine Learning Predicted Arrival Time</th>
+        </tr>
+        <tr>
+            <td>Stop→StopTime→Trip→Route Data</td>
+            <td>Stop→StopTime Data</td>
+            <td>New ML Model Data</td>
+        </tr>
+    </table>
+</body>
+</html>

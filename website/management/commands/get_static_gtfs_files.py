@@ -73,7 +73,7 @@ class Command(BaseCommand):
             with zipfile.ZipFile(io.BytesIO(response.content)) as zip_file:
                 #Process files in correct order
                 models_to_delete = [StopTimes, Trips, Routes, CalendarDates, Calendar, Stops, Agency, Shapes,\
-                                    TripUpdate, VehiclePosition, StopUpdate, ArchiveTripUpdate, ArchiveVehiclePosition, ArchiveStopUpdate ] 
+                                    TripUpdate, VehiclePosition, StopUpdate] 
                 # Order is important as the ones at the start depend on the ones at the end
                 for model in models_to_delete:
                     deleted_count, _ = model.objects.all().delete()
@@ -112,15 +112,21 @@ class Command(BaseCommand):
             objs = []
             for row in reader:
                 try:
+                    #print(model_name)
                     # Consider limiting this to just the 208 and 205
-                    if model_name == 'routes' and (row.get('route_id') == '4497_87337' or row.get('route_id') == '4497_87340'):
+                    if model_name == 'routes' and (row.get('route_id').split('_')[1] == '90255' or row.get('route_id').split('_')[1] == '90258'):
                         #print(row)
+                        #print(row.get('route_id'))
+                        #print(row.get('route_id').split('_')[1])
                         agency_id = row.get('agency_id')
+                        route_id = row.get('route_id').split('_')[1]
+                        #print(route_id)
+                        #print(type(route_id))
                         agency_instance = Agency.objects.get(agency_id=agency_id) if agency_id else None
                         #model.objects.create(agency = agency_instance, **{k: v for k, v in row.items() if k != 'agency_id'})
-                        objs.append(model(agency = agency_instance, **{k: v for k, v in row.items() if k != 'agency_id'}))
-                    elif model_name == 'trips' and (row.get('route_id') == '4497_87337' or row.get('route_id') == '4497_87340'):
-                        route_id = row.get('route_id')
+                        objs.append(model(agency = agency_instance, route_id=route_id, **{k: v for k, v in row.items() if k not in ['route_id', 'agency_id']}))
+                    elif model_name == 'trips' and (row.get('route_id').split('_')[1] == '90255' or row.get('route_id').split('_')[1] == '90258'):
+                        route_id = row.get('route_id').split('_')[1]
                         service_id = row.get('service_id')
                         #shape_id = row.get('shape_id')
                         route_instance = Routes.objects.get(route_id=route_id) if route_id else None

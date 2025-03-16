@@ -9,7 +9,8 @@
     <meta charset="utf-8" />
     <title>ML Bus</title>
     <style>
-      body { margin: 0; padding: 0; text-align: center; font-family: Helvetica, Arial, sans-serif;}
+      body { margin: 0; padding: 0; text-align: center; font-family: Helvetica, Arial, sans-serif; 
+        background-image: url("{% static '/images/bus_white.svg' %}"); background-size: 20px 20px;}
       html, body, #map { height: 100%; }
       /*.hidden {
         display: none;
@@ -29,7 +30,6 @@
             //style: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
             //style: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
             style: 'https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json',
-            // Attribute this to https://carto.com/blog/new-voyager-basemap somewhere
             //style: 'https://raw.githubusercontent.com/go2garret/maps/main/src/assets/json/openStreetMap.json',
             center: [-8.4710, 51.8991], // starting position [lng, lat]
             zoom: 14 // starting zoom
@@ -52,7 +52,7 @@
                   element: markerElement
               })
               .setLngLat([stop.stop_lon, stop.stop_lat])
-              .setPopup(new maplibregl.Popup().setText(stop.stop_name))
+              .setPopup(new maplibregl.Popup().setHTML(`<a href="stop_entries/${stop.stop_id}">${stop.stop_name}</a>`))
               .addTo(map);
               return { marker, markerElement };
             });
@@ -87,7 +87,7 @@
               var orientation = "east"
             }
             const vehicle_string = position.vehicle_id.toString();
-            if (position.route_id == '4497_87337') {
+            if (position.route_id == '90255') {
             const location_string = vehicle_string.concat(" on route ", "205 going ", orientation);
             markerElement.appendChild(five_bus_img.cloneNode(true));
             markerElement.className = 'bus_marker';
@@ -101,7 +101,7 @@
             .addTo(map);
             return { marker, markerElement };
           }
-            else if (position.route_id == '4497_87340') {
+            else if (position.route_id == '90258') {
             const location_string = vehicle_string.concat(" on route ", "208 going ", orientation);
             markerElement.appendChild(eight_bus_img.cloneNode(true));
             markerElement.className = 'bus_marker';
@@ -174,10 +174,10 @@
 
               var colour;
               switch (shapesData[key].route_id) {
-                case '4497_87337':
+                case '90255':
                   colour = '#FF5D5D';
                   break;
-                case '4497_87340':
+                case '90258':
                   colour = '#5DC7FF';
                   break;
                 default:

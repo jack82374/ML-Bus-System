@@ -25,8 +25,8 @@ class Command(BaseCommand):
                     #headers['format'] = 'json'
 
                 trip_updates_request = requests.get(api_url, headers=headers, timeout=10) # Timeout after 10 seconds
-
                 trip_updates_request.raise_for_status()  # Raise an exception for bad status codes (4xx or 5xx)
+                trip_updates = trip_updates_request.json()
 
                 locations_url = settings.GTFS_REALTIME_LOCATIONS_URL
                 if not locations_url:
@@ -36,83 +36,90 @@ class Command(BaseCommand):
                     headers['x-api-key'] = f'{settings.GTFS_REALTIME_API_KEY}'
                     headers['Cache-Control'] = 'no-cache'
                     #headers['format'] = 'json'
-
-                locations_request = requests.get(locations_url, headers=headers, timeout=10) # Timeout after 10 seconds
-                locations_request.raise_for_status()  # Raise an exception for bad status codes (4xx or 5xx)
-                trip_updates = trip_updates_request.json()
-                locations = locations_request.json()
-                # Process the JSON data
-                #print(trip_updates)
-                #print(locations)
                 now = datetime.now()
                 trip_id_mapping = {} # Map new trip_id's from Vehicles to TripUpdates (WHY NOT HAVE THEM IN BOTH!?)
-                VehiclePosition.objects.all().delete()
-                #self.stdout.write(self.style.SUCCESS(f'Cleared all previous locations'))
-                for location in locations.get('entity', []):
-                    location_trip_data = location['vehicle']['trip']
-                    location_unique_key = f"{location_trip_data['start_time']}_{location_trip_data['start_date']}_{location_trip_data['route_id']}_{location_trip_data['direction_id']}"
-                    start_full = str(location['vehicle']['trip']['start_time'])
-                    start_hour, start_minute, start_second = map(int, start_full.split(":"))
-                    start_total_seconds = (start_hour*60*60) + (start_minute*60) + start_second
-                    location_timestamp = datetime.fromtimestamp(int(location['vehicle']['timestamp']), tz=timezone.utc)
-                    if (location['vehicle']['trip']['schedule_relationship'] == 'ADDED' and
-                        (location['vehicle']['trip']['route_id'] == '4497_87337' or location['vehicle']['trip']['route_id'] == '4497_87340')):
-                        trip_id_mapping[location_unique_key] = location['vehicle']['trip']['trip_id']
-                        trip_id, created = Trips.objects.get_or_create(
-                            trip_id = location['vehicle']['trip']['trip_id'],
-                            defaults={
-                                #'start_time': start_total_seconds,
-                                #'start_date': location['vehicle']['trip']['start_date'],
-                                #'schedule_relationship': location['vehicle']['trip']['schedule_relationship'],
-                                'route': Routes.objects.get(route_id=location['vehicle']['trip']['route_id']),
-                                'direction_id': location['vehicle']['trip']['direction_id']
-                        }
-                        )
-                    elif location['vehicle']['trip']['route_id'] == '4497_87337' or location['vehicle']['trip']['route_id'] == '4497_87340':
-                        trip_id = Trips.objects.get(trip_id=location['vehicle']['trip']['trip_id'])
-                    else:
-                        continue
-                    #print(location['vehicle']['trip']['start_time'])
-                    #VehiclePosition.objects.delete(timestamp<)
-                    #print(location)
-                    #if (location['vehicle']['vehicle']['id'] != 1893 and location['vehicle']['trip']['schedule_relationship'] != 'ADDED'):
-                    if (location['vehicle']['trip']['route_id'] == '4497_87337' or location['vehicle']['trip']['route_id'] == '4497_87340'):
-                        #print(location)
-                        '''VehiclePosition.objects.update_or_create(
-                            trip = trip_id,
-                            defaults={
-                            'start_time': start_total_seconds,
-                            'start_date': location['vehicle']['trip']['start_date'],
-                            'schedule_relationship': location['vehicle']['trip']['schedule_relationship'],
-                            'route': Routes.objects.get(route_id=location['vehicle']['trip']['route_id']),
-                            'direction_id': location['vehicle']['trip']['direction_id'],
-                            'latitude': location['vehicle']['position']['latitude'],
-                            'longitude': location['vehicle']['position']['longitude'],
-                            'timestamp': location_timestamp,
-                            'vehicle_id': location['vehicle']['vehicle']['id']
+                try:
+                    locations_request = requests.get(locations_url, headers=headers, timeout=10) # Timeout after 10 seconds
+                    locations_request.raise_for_status()  # Raise an exception for bad status codes (4xx or 5xx)
+                    locations = locations_request.json()
+                    # Process the JSON data
+                    #print(trip_updates)
+                    #print(locations)
+                    VehiclePosition.objects.all().delete()
+                    #self.stdout.write(self.style.SUCCESS(f'Cleared all previous locations'))
+                    for location in locations.get('entity', []):
+                        location['vehicle']['trip']['route_id'] = location['vehicle']['trip']['route_id'].split('_')[1]
+                        location_trip_data = location['vehicle']['trip']
+                        location_unique_key = f"{location_trip_data['start_time']}_{location_trip_data['start_date']}_{location_trip_data['route_id']}_{location_trip_data['direction_id']}"
+                        start_full = str(location['vehicle']['trip']['start_time'])
+                        start_hour, start_minute, start_second = map(int, start_full.split(":"))
+                        start_total_seconds = (start_hour*60*60) + (start_minute*60) + start_second
+                        location_timestamp = datetime.fromtimestamp(int(location['vehicle']['timestamp']), tz=timezone.utc)
+                        if (location['vehicle']['trip']['schedule_relationship'] == 'ADDED' and
+                            (location['vehicle']['trip']['route_id'] == '90255' or location['vehicle']['trip']['route_id'] == '90258')):
+                            # Should probably change this and every other check for the route_ids to be if route_id in list of relevant ids, like in the view
+                            # It'd look better
+                            trip_id_mapping[location_unique_key] = location['vehicle']['trip']['trip_id']
+                            trip_id, created = Trips.objects.get_or_create(
+                                trip_id = location['vehicle']['trip']['trip_id'],
+                                defaults={
+                                    #'start_time': start_total_seconds,
+                                    #'start_date': location['vehicle']['trip']['start_date'],
+                                    #'schedule_relationship': location['vehicle']['trip']['schedule_relationship'],
+                                    'route': Routes.objects.get(route_id=location['vehicle']['trip']['route_id']),
+                                    'direction_id': location['vehicle']['trip']['direction_id']
                             }
-                        )'''
-                        #print(trip_id.trip_id)
-                        VehiclePosition.objects.create(
-                            trip = trip_id,
-                            start_time = start_total_seconds,
-                            start_date = location['vehicle']['trip']['start_date'],
-                            schedule_relationship = location['vehicle']['trip']['schedule_relationship'],
-                            route = Routes.objects.get(route_id=location['vehicle']['trip']['route_id']),
-                            direction_id = location['vehicle']['trip']['direction_id'],
-                            latitude = location['vehicle']['position']['latitude'],
-                            longitude = location['vehicle']['position']['longitude'],
-                            timestamp = location_timestamp,
-                            vehicle_id = location['vehicle']['vehicle']['id']
-                        )
-                    # ADD CHECK FOR OLD ENTRIES HERE, USE THE TIMESTAMP
-                    #VehiclePosition.objects.filter(timestamp__lt=location_timestamp).delete()
-
+                            )
+                        elif location['vehicle']['trip']['route_id'] == '90255' or location['vehicle']['trip']['route_id'] == '90258':
+                            trip_id = Trips.objects.get(trip_id=location['vehicle']['trip']['trip_id'])
+                        else:
+                            continue
+                        #print(location['vehicle']['trip']['start_time'])
+                        #VehiclePosition.objects.delete(timestamp<)
+                        #print(location)
+                        #if (location['vehicle']['vehicle']['id'] != 1893 and location['vehicle']['trip']['schedule_relationship'] != 'ADDED'):
+                        if (location['vehicle']['trip']['route_id'] == '90255' or location['vehicle']['trip']['route_id'] == '90258'):
+                            #print(location)
+                            '''VehiclePosition.objects.update_or_create(
+                                trip = trip_id,
+                                defaults={
+                                'start_time': start_total_seconds,
+                                'start_date': location['vehicle']['trip']['start_date'],
+                                'schedule_relationship': location['vehicle']['trip']['schedule_relationship'],
+                                'route': Routes.objects.get(route_id=location['vehicle']['trip']['route_id']),
+                                'direction_id': location['vehicle']['trip']['direction_id'],
+                                'latitude': location['vehicle']['position']['latitude'],
+                                'longitude': location['vehicle']['position']['longitude'],
+                                'timestamp': location_timestamp,
+                                'vehicle_id': location['vehicle']['vehicle']['id']
+                                }
+                            )'''
+                            #print(trip_id.trip_id)
+                            VehiclePosition.objects.create(
+                                trip = trip_id,
+                                start_time = start_total_seconds,
+                                start_date = location['vehicle']['trip']['start_date'],
+                                schedule_relationship = location['vehicle']['trip']['schedule_relationship'],
+                                route = Routes.objects.get(route_id=location['vehicle']['trip']['route_id']),
+                                direction_id = location['vehicle']['trip']['direction_id'],
+                                latitude = location['vehicle']['position']['latitude'],
+                                longitude = location['vehicle']['position']['longitude'],
+                                timestamp = location_timestamp,
+                                vehicle_id = location['vehicle']['vehicle']['id']
+                            )
+                        # ADD CHECK FOR OLD ENTRIES HERE, USE THE TIMESTAMP
+                        #VehiclePosition.objects.filter(timestamp__lt=location_timestamp).delete()
+                except requests.exceptions.RequestException as e:
+                    self.stdout.write(self.style.WARNING(f'Excedded request quota for vehicle locations, skipping'))
+                    # This really doesn't make sense, refreshing every minute should keep me inside the 5000 requests per day limit
+                    # Maybe vehicles have a different lower quota but that doesn't seem to be documented anywhere
+                active_trip_list = []
                 for update in trip_updates.get('entity', []):
+                    update['trip_update']['trip']['route_id'] = update['trip_update']['trip']['route_id'].split('_')[1]
                     #print(update['trip_update']['trip']['trip_id'])
                     update_trip_data = update['trip_update']['trip']
                     update_unique_key = f"{update_trip_data['start_time']}_{update_trip_data['start_date']}_{update_trip_data['route_id']}_{update_trip_data['direction_id']}"
-                    if update['trip_update']['trip']['schedule_relationship'] == 'ADDED' and (update['trip_update']['trip']['route_id'] == '4497_87337' or update['trip_update']['trip']['route_id'] == '4497_87340'):
+                    if update['trip_update']['trip']['schedule_relationship'] == 'ADDED' and (update['trip_update']['trip']['route_id'] == '90255' or update['trip_update']['trip']['route_id'] == '90258'):
                         #print(update)
                         #print(trip_id_mapping)
                         try:
@@ -120,7 +127,7 @@ class Command(BaseCommand):
                         except KeyError as key:
                             self.stdout.write(self.style.WARNING(f'No Matching entry for {update_unique_key} in trip_id mapping, skipping'))
                             continue
-                    elif (update['trip_update']['trip']['route_id'] == '4497_87337' or update['trip_update']['trip']['route_id'] == '4497_87340'):
+                    elif (update['trip_update']['trip']['route_id'] == '90255' or update['trip_update']['trip']['route_id'] == '90258'):
                         trip_id=update['trip_update']['trip']['trip_id']
                     else:
                         continue
@@ -132,8 +139,9 @@ class Command(BaseCommand):
                     start_trip_total_seconds = (start_trip_hour*60*60) + (start_trip_minute*60) + start_trip_second
                     update_timestamp = datetime.fromtimestamp(int(update['trip_update']['timestamp']), tz=timezone.utc)
                     vehicle_id = update['trip_update'].get('vehicle', {}).get('vehicle_id')
-                    if (update['trip_update']['trip']['route_id'] == '4497_87337' or update['trip_update']['trip']['route_id'] == '4497_87340'):
+                    if (update['trip_update']['trip']['route_id'] == '90255' or update['trip_update']['trip']['route_id'] == '90258'):
                         TripUpdate.objects.update_or_create(trip = trip,
+                                                            day = now.weekday(),
                                                             defaults={ 
                                                 'start_time': start_trip_total_seconds,
                                                 'start_date': update['trip_update']['trip']['start_date'],
@@ -141,25 +149,31 @@ class Command(BaseCommand):
                                                 'route': route,
                                                 'direction_id': update['trip_update']['trip']['direction_id'],
                                                 'vehicle_id': vehicle_id,
-                                                'timestamp':  update_timestamp,
-                                                'day': now.weekday()
+                                                'timestamp':  update_timestamp
+                                                #'day': now.weekday()
                                                 }
                                                 )
-                        ArchiveTripUpdate.objects.create(trip_id = trip.trip_id, 
-                                                start_time = start_trip_total_seconds,
-                                                start_date = update['trip_update']['trip']['start_date'],
-                                                schedule_relationship = update['trip_update']['trip']['schedule_relationship'],
-                                                route_id = route.route_id,
-                                                direction_id = update['trip_update']['trip']['direction_id'],
-                                                vehicle_id = vehicle_id,
-                                                timestamp = update_timestamp,
-                                                day = now.weekday()
+                        ArchiveTripUpdate.objects.update_or_create(trip_id = trip.trip_id,
+                                                            day = now.weekday(),
+                                                            defaults={ 
+                                                'start_time': start_trip_total_seconds,
+                                                'start_date': update['trip_update']['trip']['start_date'],
+                                                'schedule_relationship': update['trip_update']['trip']['schedule_relationship'],
+                                                'route_id': route.route_id,
+                                                'direction_id': update['trip_update']['trip']['direction_id'],
+                                                'vehicle_id': vehicle_id,
+                                                'timestamp':  update_timestamp
+                                                #'day': now.weekday()
+                                                }
                                                 )
-                        i = 0
+                        active_trip_list.append(trip_id)
+                        #i = 0
+                        stop_updates = update['trip_update'].get('stop_time_update', [])
                         for stop in update['trip_update'].get('stop_time_update', []):
-                            stop_id = Stops.objects.get(stop_id=stop['stop_id'])
+                        #if stop_updates:
+                            #stop = stop_updates[-1]
+                            stop_indv = Stops.objects.get(stop_id=stop['stop_id'])
                             #update['trip_update'].get('vehicle', {}).get('vehicle_id')
-                            #arrival_uncert = stop['arrival'].get('uncertainty')
                             arrival_dict = stop.get('arrival')
                             if arrival_dict is not None:
                                 arrival_uncert = arrival_dict.get('uncertainty')
@@ -174,7 +188,6 @@ class Command(BaseCommand):
                                 depart_delay = depart_dict.get('delay')
                             else:
                                 depart_delay = None
-                            #stop_full = stop['arrival'].get('time')
                             #print(stop_full)
                             #print(type(stop_full))
                             if stop_full is not None:
@@ -193,27 +206,30 @@ class Command(BaseCommand):
                                                     'arrival_uncertainty': arrival_uncert,
                                                     'arrival_delay': arrival_delay,
                                                     'departure_delay': depart_delay,
-                                                    'stop_id': stop_id,
+                                                    'stop': stop_indv,
                                                     'schedule_relationship': relation
                                                                 }
                                                     )
-                            ArchiveStopUpdate.objects.create(trip_id = trip.trip_id, 
-                                                    stop_sequence = stop['stop_sequence'],
-                                                    arrival_time = stop_total_seconds,
-                                                    arrival_uncertainty = arrival_uncert,
-                                                    arrival_delay = arrival_delay,
-                                                    departure_delay = depart_delay,
-                                                    stop_id = stop_id.stop_id,
-                                                    schedule_relationship = relation
+                            ArchiveStopUpdate.objects.update_or_create(trip_id = trip.trip_id,
+                                                                stop_sequence = stop['stop_sequence'],
+                                                                defaults={
+                                                    #'stop_sequence': stop['stop_sequence'],
+                                                    'arrival_time': stop_total_seconds,
+                                                    'arrival_uncertainty': arrival_uncert,
+                                                    'arrival_delay': arrival_delay,
+                                                    'departure_delay': depart_delay,
+                                                    'stop_id': stop_indv.stop_id,
+                                                    'schedule_relationship': relation
+                                                                }
                                                     )
-                            if i == 0:
-                                StopUpdate.objects.filter(trip=trip, stop_sequence__lt=stop['stop_sequence']).delete()
+                            #if i == 0:
+                            #    StopUpdate.objects.filter(trip=trip, stop_sequence__lt=stop['stop_sequence']).delete()
                             # Deleting older stop updates. Find a better way to do this, this is terrible
-                            i = i + 1
-
-                
-                
-
+                            #i = i + 1
+                #TripUpdate.objects.filter(trip not in active_trip_list).delete()
+                #StopUpdate.objects.filter(trip not in active_trip_list).delete()
+                TripUpdate.objects.exclude(trip__in=active_trip_list).delete()
+                StopUpdate.objects.exclude(trip__in=active_trip_list).delete()
                 print(f"Location updates saved to models and DB")
             except requests.exceptions.RequestException as e:
                 self.stderr.write(self.style.ERROR(f'Error fetching GTFS data: {e}'))
