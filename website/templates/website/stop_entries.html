@@ -4,27 +4,95 @@
 <head>
     <title>Stop Detail</title>
     <style>
-        body { margin: 0; padding: 0; text-align: center; font-family: Helvetica, Arial, sans-serif; }
+        body { margin: 0px auto; padding: 0; text-align: center; font-family: Helvetica, Arial, sans-serif; 
+               background-image: linear-gradient(#FF7B7B, #7BA7FF);}
+        table, th, td {
+            border: 1px solid;
+            margin-left: auto;
+            margin-right: auto;
+          }
     </style>
 </head>
 <body>
-    <h1>Stop Name: {{ stop.stop_name }}</h1>
-    <p>Stop ID: {{ stop.stop_id }}</p>
-    <p>Stop Description: {{ stop.stop_desc }}</p>
+    <script type="application/json" id="data">
+        {{ active_relevant_stoptimes_json|safe }}
+    </script>
+    <script type="application/json" id="stop_updates">
+        {{ stop_updates_json|safe }}
+    </script>
+    <!--<h1>Stop Name: {{ stop.stop_name }}</h1>-->
+    <h1>Stop: {{ stop_name }}</h1>
+    <!--<p>Stop Description: {{ stop.stop_desc }}</p>
     <p>Location:
         Lon: {{ stop.stop_lon }}
-        Lat: {{ stop.stop_lat }}</p>
-    <table>
+        Lat: {{ stop.stop_lat }}</p>-->
+    <div id='table'>
+    <table id="timeTable">
         <tr>
             <th>Route</th>
+            <th>Schedule Relationship</th>
             <th>Timetabled Arrival Time</th>
             <th>Machine Learning Predicted Arrival Time</th>
         </tr>
-        <tr>
+        <!---<tr>
             <td>Stop→StopTime→Trip→Route Data</td>
             <td>Stop→StopTime Data</td>
             <td>New ML Model Data</td>
-        </tr>
+        </tr>-->
     </table>
+    </div>
+    <script>
+        //const call_stopTimes= setInterval(addRow, 30000);
+        function addRow() {
+            var table = document.getElementById("timeTable");
+            var timeEntriesJson = document.getElementById('data').textContent;
+            var stopUpdatesJson = document.getElementById('stop_updates').textContent;
+            var timeEntries = JSON.parse(timeEntriesJson);
+            var stopUpdateEntries = JSON.parse(stopUpdatesJson);
+            console.log(timeEntries)
+            console.log(stopUpdateEntries)
+            timeEntries.forEach(time_entry => {
+                var overallRelationship = 'ASSUMED SCHEDULED'
+                //console.log("NEW TIME ENTRY!");
+                const update = stopUpdateEntries.find(update => update.trip_id === time_entry.trip_id);
+                if (update) {
+                    console.log("Found an update!");
+                    console.log(update.arrival_delay);
+                    overallRelationship = update.schedule_relationship;
+                } else {
+                    console.log("No arrival time match, it hasn't arrived yet!");
+                }
+                //console.log(time_entry)
+                var newRow = table.insertRow();
+                var routeCell = newRow.insertCell();
+                var relationshipCell = newRow.insertCell();
+                var timeTabledCell = newRow.insertCell();
+                var mlCell = newRow.insertCell();
+
+                if (time_entry.trip__route_id == 90255) {
+                    routeCell.innerHTML = 205;
+                }
+                else if (time_entry.trip__route_id == 90258) {
+                    routeCell.innerHTML = 208;
+                }
+
+                relationshipCell.innerHTML = overallRelationship
+
+                const hours = Math.floor(time_entry.arrival_time / 3600);
+                const minutes = Math.floor((time_entry.arrival_time % 3600) / 60);
+                const remainingSeconds = time_entry.arrival_time % 60;
+
+                const formattedHours = String(hours).padStart(2, '0');
+                const formattedMinutes = String(minutes).padStart(2, '0');
+                const formattedSeconds = String(remainingSeconds).padStart(2, '0');
+                const timeToDisplay = `${formattedHours}:${formattedMinutes}:${formattedSeconds}`;
+
+                timeTabledCell.innerHTML = timeToDisplay;
+                mlCell.innerHTML = "TODO";
+        });
+        // Should add in something to sort the table by scheduled arrival time here.
+        }
+        addRow()
+    </script>
 </body>
 </html>

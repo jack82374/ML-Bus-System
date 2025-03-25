@@ -6,7 +6,10 @@ from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.template import loader
 import requests
-from .models import Stops, Trips, VehiclePosition, Shapes
+from .models import Stops, Trips, VehiclePosition, Shapes, StopTimes, TripUpdate, StopUpdate
+from django.views.decorators.csrf import csrf_exempt
+import numpy as np
+import keras
 
 
 def index(request):
@@ -53,6 +56,33 @@ def get_shapes(request):
     return JsonResponse(shapes_list, safe=False)
 
 def stop_entries(request, stop_id):
-    print(stop_id)
-    stop = get_object_or_404(Stops, stop_id=stop_id)
-    return render(request, 'website/stop_entries.html', {'stop': stop})
+    stop_name = Stops.objects.get(stop_id=stop_id).stop_name
+    active_trips = TripUpdate.objects.distinct().values_list('trip_id', flat=True)
+    stoptimes_to_consider = list(StopTimes.objects.filter(trip__in=active_trips, stop_id=stop_id).distinct().
+                                 select_related('trip__route').values('id', 'trip_id', 'arrival_time', 'trip__route_id'))
+    active_relevant_stoptimes_json = json.dumps(stoptimes_to_consider)
+    stop_updates = list(StopUpdate.objects.filter(trip__in=active_trips, stop_id=stop_id).distinct().
+                        values('trip_id', 'stop_sequence', 'arrival_time', 'arrival_delay', 'departure_delay', 'stop_id', 'schedule_relationship'))
+    stop_updates_json = json.dumps(stop_updates)
+    context = {
+        'active_relevant_stoptimes_json': active_relevant_stoptimes_json,
+        'stop_name': stop_name,
+        'stop_updates_json': stop_updates_json
+    }
+    return render(request, 'website/stop_entries.html', context)
+
+model = keras.models.load_model('website/ml_model/model.keras')
+
+@csrf_exempt
+def predict(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        input_data = np.array(data['input'])
+        predictions = model.predict(input_data)
+        return JsonResponse({'predictions': predictions.tolist()})
+    return JsonResponse({'error': 'Invalid request method'}, status=400)
+
+def reload_model_view(request):
+    global model
+    model = keras.models.load_model('website/ml_model/model.keras')
+    #return JsonResponse({'status': 'Model reloaded successfully'})

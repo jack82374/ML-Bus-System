@@ -141,7 +141,6 @@ class Command(BaseCommand):
                     vehicle_id = update['trip_update'].get('vehicle', {}).get('vehicle_id')
                     if (update['trip_update']['trip']['route_id'] == '90255' or update['trip_update']['trip']['route_id'] == '90258'):
                         TripUpdate.objects.update_or_create(trip = trip,
-                                                            day = now.weekday(),
                                                             defaults={ 
                                                 'start_time': start_trip_total_seconds,
                                                 'start_date': update['trip_update']['trip']['start_date'],
@@ -149,12 +148,11 @@ class Command(BaseCommand):
                                                 'route': route,
                                                 'direction_id': update['trip_update']['trip']['direction_id'],
                                                 'vehicle_id': vehicle_id,
-                                                'timestamp':  update_timestamp
-                                                #'day': now.weekday()
+                                                'timestamp':  update_timestamp,
+                                                'day': now.weekday()
                                                 }
                                                 )
                         ArchiveTripUpdate.objects.update_or_create(trip_id = trip.trip_id,
-                                                            day = now.weekday(),
                                                             defaults={ 
                                                 'start_time': start_trip_total_seconds,
                                                 'start_date': update['trip_update']['trip']['start_date'],
@@ -162,8 +160,8 @@ class Command(BaseCommand):
                                                 'route_id': route.route_id,
                                                 'direction_id': update['trip_update']['trip']['direction_id'],
                                                 'vehicle_id': vehicle_id,
-                                                'timestamp':  update_timestamp
-                                                #'day': now.weekday()
+                                                'timestamp':  update_timestamp,
+                                                'day': now.weekday()
                                                 }
                                                 )
                         active_trip_list.append(trip_id)

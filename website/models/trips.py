@@ -3,8 +3,8 @@ from django.db import models
 from website.models import Calendar, Routes
 
 class Trips(models.Model):
-    route= models.ForeignKey(Routes, on_delete=models.RESTRICT)
-    service = models.ForeignKey(Calendar, on_delete=models.RESTRICT, null=True, blank=True)
+    route= models.ForeignKey(Routes, on_delete=models.CASCADE)
+    service = models.ForeignKey(Calendar, on_delete=models.CASCADE, null=True, blank=True)
     trip_id = models.CharField(max_length=255, primary_key=True)
     trip_headsign = models.CharField(max_length=255, null=True, blank=True)
     trip_short_name = models.CharField(max_length=255, null=True, blank=True)
