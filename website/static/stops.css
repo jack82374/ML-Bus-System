@@ -1,0 +1,19 @@
+body {
+    margin: 0px auto;
+    padding: 0;
+    text-align: center;
+    font-family: Helvetica, Arial, sans-serif;
+}
+
+table,
+th,
+td {
+    border: 1px solid;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+html {
+    background-image: linear-gradient(#FF7B7B, #7BA7FF);
+    height: 100%;
+}

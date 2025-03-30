@@ -56,25 +56,25 @@ def get_shapes(request):
     return JsonResponse(shapes_list, safe=False)
 
 def stop_entries(request, stop_id):
-    stop_name = Stops.objects.get(stop_id=stop_id).stop_name
+    #stop_name = Stops.objects.get(stop_id=stop_id).stop_name
     active_trips = TripUpdate.objects.distinct().values_list('trip_id', flat=True)
     stoptimes_to_consider = list(StopTimes.objects.filter(trip__in=active_trips, stop_id=stop_id).distinct().
                                  select_related('trip__route').values('id', 'trip_id', 'arrival_time', 'trip__route_id'))
-    active_relevant_stoptimes_json = json.dumps(stoptimes_to_consider)
+    #active_relevant_stoptimes_json = json.dumps(stoptimes_to_consider)
     stop_updates = list(StopUpdate.objects.filter(trip__in=active_trips, stop_id=stop_id).distinct().
                         values('trip_id', 'stop_sequence', 'arrival_time', 'arrival_delay', 'departure_delay', 'stop_id', 'schedule_relationship'))
-    stop_updates_json = json.dumps(stop_updates)
+    #stop_updates_json = json.dumps(stop_updates)
     context = {
-        'active_relevant_stoptimes_json': active_relevant_stoptimes_json,
-        'stop_name': stop_name,
-        'stop_updates_json': stop_updates_json
+        'active_relevant_stoptimes_json': stoptimes_to_consider,
+        'stop_updates_json': stop_updates
     }
-    return render(request, 'website/stop_entries.html', context)
+    #return render(request, 'website/stop_entries.html', context)
+    return JsonResponse(context)
 
-model = keras.models.load_model('website/ml_model/model.keras')
+#model = keras.models.load_model('website/ml_model/model.keras')
 
-@csrf_exempt
-def predict(request):
+#@csrf_exempt
+'''def predict(request):
     if request.method == 'POST':
         data = json.loads(request.body)
         input_data = np.array(data['input'])
@@ -85,4 +85,12 @@ def predict(request):
 def reload_model_view(request):
     global model
     model = keras.models.load_model('website/ml_model/model.keras')
-    #return JsonResponse({'status': 'Model reloaded successfully'})
+    #return JsonResponse({'status': 'Model reloaded successfully'})'''
+
+def stop_page(request, stop_id):
+    stop_name = Stops.objects.get(stop_id=stop_id).stop_name
+    context = {
+        'stop_id': stop_id,
+        'stop_name': stop_name
+    }
+    return render(request, 'website/stop_entries.html', context)

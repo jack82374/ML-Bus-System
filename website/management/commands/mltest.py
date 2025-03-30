@@ -71,7 +71,7 @@ class Command(BaseCommand):
         model.save('website/ml_model/model.keras')
         ArchiveTripUpdate.objects.all().delete()
         ArchiveStopUpdate.objects.all().delete()
-        views.reload_model_view(None)
+        #views.reload_model_view(None)
 
         '''for i in range(20):
             print(f"Predicted: {predictions[i]}, Actual: {y_val[i]}")

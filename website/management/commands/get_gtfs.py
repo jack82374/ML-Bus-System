@@ -5,7 +5,8 @@ import requests
 import json
 from django.core.management.base import BaseCommand
 from django.conf import settings  # Import settings for API key
-from website.models import TripUpdate, StopUpdate, VehiclePosition, ArchiveTripUpdate, ArchiveStopUpdate, ArchiveVehiclePosition, Trips, Stops, Routes, SiteSettings
+from website.models import TripUpdate, StopUpdate, VehiclePosition, ArchiveTripUpdate, ArchiveStopUpdate, Trips, Stops, Routes, SiteSettings, NextDelay
+from django.core.management import call_command
 
 class Command(BaseCommand):
     help = 'Fetches GTFS Realtime data'
@@ -224,10 +225,21 @@ class Command(BaseCommand):
                             #    StopUpdate.objects.filter(trip=trip, stop_sequence__lt=stop['stop_sequence']).delete()
                             # Deleting older stop updates. Find a better way to do this, this is terrible
                             #i = i + 1
+
+                    #print(trip_id)
+                    #generated_delay = call_command('predict', trip_id)
+                    #print(type(generated_delay))
+                    #print(f"The predicted next delay is {generated_delay}.")
+                    '''NextDelay.objects.update_or_create(trip_id = trip_id,
+                                                       defaults={
+                                                           'delay': generated_delay
+                                                       }
+                                                    )'''
+                    
                 #TripUpdate.objects.filter(trip not in active_trip_list).delete()
                 #StopUpdate.objects.filter(trip not in active_trip_list).delete()
                 TripUpdate.objects.exclude(trip__in=active_trip_list).delete()
-                StopUpdate.objects.exclude(trip__in=active_trip_list).delete()
+                #StopUpdate.objects.exclude(trip__in=active_trip_list).delete()
                 print(f"Location updates saved to models and DB")
             except requests.exceptions.RequestException as e:
                 self.stderr.write(self.style.ERROR(f'Error fetching GTFS data: {e}'))

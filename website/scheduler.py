@@ -17,6 +17,9 @@ def run_get_gtfs():
 def refresh_static():
     call_command('get_static_gtfs_files')
 
+def retrain_model():
+    call_command('mltest')
+
 # Schedule the task
 def add_jobs():
     scheduler.add_job(run_get_gtfs, 'interval', minutes=1, id='get_trip_and_location_updates', replace_existing=True)
@@ -24,6 +27,10 @@ def add_jobs():
             year="*", month="*", day="*", hour="1", minute="30", second="0"
         )
     scheduler.add_job(refresh_static, static_trigger, id='refresh_static_gtfs_files', replace_existing=True)
+    training_triger = CronTrigger(
+            year="*", month="*", day="1", hour="1", minute="0", second="0"
+        )
+    scheduler.add_job(retrain_model, training_triger, id='retrain_ml_model', replace_existing=True)
 
 def start_scheduler():
     add_jobs()
