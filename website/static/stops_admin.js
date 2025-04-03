@@ -1,3 +1,4 @@
+//const stop_id = "{{ stop_id }}" 
 const stop_url = `/website/stop_entries/${stop_id}/`;
 console.log(stop_url);
 const call_stopUpdates = setInterval(addRow, 30000);
@@ -31,6 +32,7 @@ function addRow() {
     fetch(stop_url)
         .then(response => response.json())
         .then(data => {
+            //console.log(data)
             const timeEntries = data['active_relevant_stoptimes_json']
             const stopUpdateEntries = data['stop_updates_json']
             const tripUpdateEntries = data['trip_updates_json']
@@ -52,28 +54,36 @@ function addRow() {
                 var overallRelationship = 'ASSUMED SCHEDULED';
                 const trip = tripUpdateEntries.find(trip => trip.trip_id === time_entry.trip_id);
                 if (trip) {
+                    //console.log("Trip found, changing relationship")
                     overallRelationship = trip.schedule_relationship;
                 }
                 var actualTime = "Not yet arrived!";
+                //console.log("NEW TIME ENTRY!");
                 const update = stopUpdateEntries.find(update => update.trip_id === time_entry.trip_id);
                 if (update) {
-                    return
                     //console.log("Found an update!");
                     //console.log(update.arrival_delay);
                     //overallRelationship = update.schedule_relationship;
-                    /*overallRelationship = "ARRIVED";
-                    actualTime = time_entry.arrival_time + update.arrival_delay;
-                    const delay_hours = Math.floor(actualTime / 3600);
-                    const delay_minutes = Math.floor((actualTime % 3600) / 60);
-                    const delay_remainingSeconds = actualTime % 60;
+                    if (update.schedule_relationship == 'SCHEDULED') {
+                        overallRelationship = "ARRIVED";
+                        actualTime = time_entry.arrival_time + update.arrival_delay;
+                        const delay_hours = Math.floor(actualTime / 3600);
+                        const delay_minutes = Math.floor((actualTime % 3600) / 60);
+                        const delay_remainingSeconds = actualTime % 60;
 
-                    const delay_formattedHours = String(delay_hours).padStart(2, '0');
-                    const delay_formattedMinutes = String(delay_minutes).padStart(2, '0');
-                    const delay_formattedSeconds = String(delay_remainingSeconds).padStart(2, '0');
-                    actualTime = `${delay_formattedHours}:${delay_formattedMinutes}:${delay_formattedSeconds}`;*/
+                        const delay_formattedHours = String(delay_hours).padStart(2, '0');
+                        const delay_formattedMinutes = String(delay_minutes).padStart(2, '0');
+                        const delay_formattedSeconds = String(delay_remainingSeconds).padStart(2, '0');
+                        actualTime = `${delay_formattedHours}:${delay_formattedMinutes}:${delay_formattedSeconds}`;
+                    }
+                    else {
+                        overallRelationship = update.schedule_relationship;
+                        actualTime = "Did not arrive!"
+                    }
                 } /*else {
                     console.log("No arrival time match, it hasn't arrived yet!");
                 }*/
+                //console.log(time_entry)
                 var newRow = table.insertRow();
                 var routeCell = newRow.insertCell();
                 var relationshipCell = newRow.insertCell();
@@ -107,8 +117,6 @@ function addRow() {
                 const mlformattedMinutes = String(mlminutes).padStart(2, '0');
                 const mlformattedSeconds = String(mlremainingSeconds).padStart(2, '0');
                 const mltimeToDisplay = `${mlformattedHours}:${mlformattedMinutes}:${mlformattedSeconds}`;
-
-                // This should probably be a function, with it being reused. Come back to this if I have time
 
                 timeTabledCell.innerHTML = timeToDisplay;
                 mlCell.innerHTML = mltimeToDisplay;

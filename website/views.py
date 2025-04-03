@@ -6,7 +6,7 @@ from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.template import loader
 import requests
-from .models import Stops, Trips, VehiclePosition, Shapes, StopTimes, TripUpdate, StopUpdate
+from .models import Stops, Trips, VehiclePosition, Shapes, StopTimes, TripUpdate, StopUpdate, NextDelay
 from django.views.decorators.csrf import csrf_exempt
 import numpy as np
 import keras
@@ -63,10 +63,16 @@ def stop_entries(request, stop_id):
     #active_relevant_stoptimes_json = json.dumps(stoptimes_to_consider)
     stop_updates = list(StopUpdate.objects.filter(trip__in=active_trips, stop_id=stop_id).distinct().
                         values('trip_id', 'stop_sequence', 'arrival_time', 'arrival_delay', 'departure_delay', 'stop_id', 'schedule_relationship'))
+    trip_updates = list(TripUpdate.objects.filter(trip__in=active_trips).distinct().
+                        values('trip_id', 'schedule_relationship'))
+    delays = list(NextDelay.objects.filter(trip__in=active_trips).distinct().
+                        values('trip_id', 'delay'))
     #stop_updates_json = json.dumps(stop_updates)
     context = {
         'active_relevant_stoptimes_json': stoptimes_to_consider,
-        'stop_updates_json': stop_updates
+        'stop_updates_json': stop_updates,
+        'trip_updates_json': trip_updates,
+        'delays_json' : delays
     }
     #return render(request, 'website/stop_entries.html', context)
     return JsonResponse(context)
@@ -94,3 +100,15 @@ def stop_page(request, stop_id):
         'stop_name': stop_name
     }
     return render(request, 'website/stop_entries.html', context)
+
+def stop_page_admin(request, stop_id):
+    stop_name = Stops.objects.get(stop_id=stop_id).stop_name
+    context = {
+        'stop_id': stop_id,
+        'stop_name': stop_name
+    }
+    return render(request, 'website/stop_entries_admin.html', context)
+
+def about(request):
+    template = loader.get_template("website/about.html")
+    return HttpResponse(template.render(None, request))

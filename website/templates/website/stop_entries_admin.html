@@ -8,7 +8,7 @@
         const stop_id = "{{stop_id}}";
         console.log(stop_id);
     </script>
-    <script src="{% static 'stops.js' %}" defer></script>
+    <script src="{% static 'stops_admin.js' %}" defer></script>
     <title>Stop Detail</title>
 </head>
 <body>
@@ -21,7 +21,7 @@
     <table id="timeTable">
     </table>
     </div>
-    <a href="/website/stop_example_admin/{{stop_id}}">Show History</a>
+    <a href="/website/stop_example/{{stop_id}}">Hide History</a>
     <a href="/website">Go Back</a>
     <h3><a href="/website/about">About</a></h3>
 </body>

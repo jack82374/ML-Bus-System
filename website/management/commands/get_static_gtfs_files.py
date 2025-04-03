@@ -9,7 +9,7 @@ from django.utils import timezone
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.management.base import BaseCommand
 from website.models import Routes, Stops, Trips, StopTimes, Calendar, CalendarDates, \
-    Agency, Shapes, FeedInfo, GTFSDataInfo, SiteSettings, TripUpdate, VehiclePosition, StopUpdate, ArchiveTripUpdate, ArchiveVehiclePosition, ArchiveStopUpdate
+    Agency, Shapes, FeedInfo, GTFSDataInfo, SiteSettings, TripUpdate, VehiclePosition, StopUpdate, NextDelay
 
 #import hashlib
 
@@ -73,7 +73,7 @@ class Command(BaseCommand):
             with zipfile.ZipFile(io.BytesIO(response.content)) as zip_file:
                 #Process files in correct order
                 models_to_delete = [StopTimes, Trips, Routes, CalendarDates, Calendar, Stops, Agency, Shapes,\
-                                    TripUpdate, VehiclePosition, StopUpdate] 
+                                    TripUpdate, VehiclePosition, StopUpdate, NextDelay] 
                 # Order is important as the ones at the start depend on the ones at the end
                 for model in models_to_delete:
                     deleted_count, _ = model.objects.all().delete()

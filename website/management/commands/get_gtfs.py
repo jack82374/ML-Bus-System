@@ -38,6 +38,8 @@ class Command(BaseCommand):
                     headers['Cache-Control'] = 'no-cache'
                     #headers['format'] = 'json'
                 now = datetime.now()
+                midnight = now.replace(hour=0, minute=0, second=0, microsecond=0)
+                seconds_since_midnight = (now - midnight).total_seconds()
                 trip_id_mapping = {} # Map new trip_id's from Vehicles to TripUpdates (WHY NOT HAVE THEM IN BOTH!?)
                 try:
                     locations_request = requests.get(locations_url, headers=headers, timeout=10) # Timeout after 10 seconds
@@ -189,12 +191,20 @@ class Command(BaseCommand):
                                 depart_delay = None
                             #print(stop_full)
                             #print(type(stop_full))
-                            if stop_full is not None:
-                                stop_full = str(stop_full)
-                                stop_hour, stop_minute, stop_second = map(int, stop_full.split(":"))
-                                stop_total_seconds = (stop_hour*60*60) + (stop_minute*60) + stop_second
-                            else:
+                            try:
+                                if stop_full is not None:
+                                    stop_full = str(stop_full)
+                                    stop_hour, stop_minute, stop_second = map(int, stop_full.split(":"))
+                                    stop_total_seconds = (stop_hour*60*60) + (stop_minute*60) + stop_second
+                                else:
+                                    stop_total_seconds = None
+                            except ValueError as wierd_times:
+                                #print(f"{wierd_times} error was caused by {stop}")
+                                stop_total_seconds = int(stop_full)
+                            if stop_total_seconds is not None and stop_total_seconds > seconds_since_midnight:
+                                print("The arrival time can't be in the future, ignoring!")
                                 stop_total_seconds = None
+                            # Sanity check to prevent arrival times in the future. Pretty bad but oh well.
                             relation = stop.get('schedule_relationship')
                             #print(stop)
                             StopUpdate.objects.update_or_create(trip = trip,
@@ -227,10 +237,11 @@ class Command(BaseCommand):
                             #i = i + 1
 
                     #print(trip_id)
-                    #generated_delay = call_command('predict', trip_id)
-                    #print(type(generated_delay))
-                    #print(f"The predicted next delay is {generated_delay}.")
-                    '''NextDelay.objects.update_or_create(trip_id = trip_id,
+                    call_command('predict', trip_id)
+                    '''generated_delay = call_command('predict', trip_id)
+                    print(type(generated_delay))
+                    print(f"The predicted next delay is {generated_delay}.")
+                    NextDelay.objects.update_or_create(trip_id = trip_id,
                                                        defaults={
                                                            'delay': generated_delay
                                                        }
