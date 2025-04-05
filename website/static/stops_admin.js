@@ -32,7 +32,12 @@ function addRow() {
     fetch(stop_url)
         .then(response => response.json())
         .then(data => {
-            //console.log(data)
+            const now = new Date();
+            const hoursSinceMidnight = now.getHours();
+            const minutesSinceMindnight = now.getMinutes();
+            const secondsSinceMidnight = now.getSeconds();
+            const totalSecondsSinceMidnight = hoursSinceMidnight * 3600 + minutesSinceMindnight * 60 + secondsSinceMidnight;
+            
             const timeEntries = data['active_relevant_stoptimes_json']
             const stopUpdateEntries = data['stop_updates_json']
             const tripUpdateEntries = data['trip_updates_json']
@@ -57,7 +62,13 @@ function addRow() {
                     //console.log("Trip found, changing relationship")
                     overallRelationship = trip.schedule_relationship;
                 }
-                var actualTime = "Not yet arrived!";
+                var actualTime = "In the future!";
+                if (totalSecondsSinceMidnight > time_entry.arrival_time) {
+                    actualTime = 'Late'
+                }
+                else {
+                    actualTime = 'On Time'
+                }
                 //console.log("NEW TIME ENTRY!");
                 const update = stopUpdateEntries.find(update => update.trip_id === time_entry.trip_id);
                 if (update) {
@@ -78,7 +89,7 @@ function addRow() {
                     }
                     else {
                         overallRelationship = update.schedule_relationship;
-                        actualTime = "Did not arrive!"
+                        actualTime = "Skipped"
                     }
                 } /*else {
                     console.log("No arrival time match, it hasn't arrived yet!");

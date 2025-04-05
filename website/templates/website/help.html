@@ -1,0 +1,19 @@
+{% load static %}
+<!doctype html>
+<html lang="en-GB">
+  <head>
+    <link rel="stylesheet" type="text/css" href="{% static 'index.css' %}">
+    <link rel="icon" href="{% static 'images/question_mark.svg' %}" type="image/x-icon">
+    <meta charset="utf-8" />
+    <title>Help</title>
+    
+  </head>
+  <body>
+    <h1>Help</h1>
+    <h2>The map page displays live buses. 205 buses are red, 208 buses are blue.</h2>
+    <h2>Light coloured buses are going east, darker ones are going west.</h2>
+    <h2>Each stop page displays the scheduled and predicted arrival time at that stop for each active trip. Past recent arrivals are hidden by default but can be shown by clicking Show Log.</h2>
+    <a href="/website">Go Back</a>
+    <h3><a href="/website/about">About</a></h3>
+  </body>
+</html>

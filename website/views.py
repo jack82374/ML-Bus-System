@@ -112,3 +112,7 @@ def stop_page_admin(request, stop_id):
 def about(request):
     template = loader.get_template("website/about.html")
     return HttpResponse(template.render(None, request))
+
+def help(request):
+    template = loader.get_template("website/help.html")
+    return HttpResponse(template.render(None, request))

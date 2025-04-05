@@ -1,12 +1,12 @@
 from datetime import datetime, timezone
-import hashlib
 import traceback
 import requests
 import json
 from django.core.management.base import BaseCommand
 from django.conf import settings  # Import settings for API key
-from website.models import TripUpdate, StopUpdate, VehiclePosition, ArchiveTripUpdate, ArchiveStopUpdate, Trips, Stops, Routes, SiteSettings, NextDelay
+from website.models import TripUpdate, StopUpdate, VehiclePosition, ArchiveTripUpdate, ArchiveStopUpdate, Trips, Stops, Routes, SiteSettings, StopTimes
 from django.core.management import call_command
+from django.db.models import Max
 
 class Command(BaseCommand):
     help = 'Fetches GTFS Realtime data'
@@ -168,6 +168,7 @@ class Command(BaseCommand):
                                                 }
                                                 )
                         active_trip_list.append(trip_id)
+
                         #i = 0
                         stop_updates = update['trip_update'].get('stop_time_update', [])
                         for stop in update['trip_update'].get('stop_time_update', []):
@@ -231,10 +232,22 @@ class Command(BaseCommand):
                                                     'schedule_relationship': relation
                                                                 }
                                                     )
-                            #if i == 0:
-                            #    StopUpdate.objects.filter(trip=trip, stop_sequence__lt=stop['stop_sequence']).delete()
-                            # Deleting older stop updates. Find a better way to do this, this is terrible
-                            #i = i + 1
+                            
+                        stop_sequences_this_trip = StopTimes.objects.filter(trip_id=trip_id)
+                        if (stop_sequences_this_trip is not None):
+                            #max_stop_seq_lookup = stop_sequences_this_trip.aggregate(Max('stop_sequence'))
+                            try:
+                                last_stop = update['trip_update'].get('stop_time_update', [])[-1]
+                                #max_stop_value = max_stop_seq_lookup['stop_sequence__max']
+                                max_stop_value = last_stop['stop_sequence']
+                                for i in range(1, max_stop_value+1):
+                                    update_exists = StopUpdate.objects.filter(trip_id=trip_id, stop_sequence=i).exists()
+                                    if (update_exists == False):
+                                        stop_id_this_seq = StopTimes.objects.get(trip_id=trip_id, stop_sequence=i).stop_id
+                                        stop_instance = Stops.objects.get(stop_id=stop_id_this_seq)
+                                        StopUpdate.objects.create(trip=trip, stop_sequence=i, stop=stop_instance, schedule_relationship="SKIPPED")
+                            except IndexError as strangeList:
+                                print(f"Could not access StopUpdates for trip {trip_id} so could not handle skips, continuing")
 
                     #print(trip_id)
                     call_command('predict', trip_id)
