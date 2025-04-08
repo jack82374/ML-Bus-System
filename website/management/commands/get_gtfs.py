@@ -51,7 +51,11 @@ class Command(BaseCommand):
                     VehiclePosition.objects.all().delete()
                     #self.stdout.write(self.style.SUCCESS(f'Cleared all previous locations'))
                     for location in locations.get('entity', []):
-                        location['vehicle']['trip']['route_id'] = location['vehicle']['trip']['route_id'].split('_')[1]
+                        try:
+                            location['vehicle']['trip']['route_id'] = location['vehicle']['trip']['route_id'].split('_')[1]
+                        except KeyError as no_routeid:
+                            print(f"Location update {location['vehicle']['trip']['trip_id']} has no route_id, skipping")
+                            continue
                         location_trip_data = location['vehicle']['trip']
                         location_unique_key = f"{location_trip_data['start_time']}_{location_trip_data['start_date']}_{location_trip_data['route_id']}_{location_trip_data['direction_id']}"
                         start_full = str(location['vehicle']['trip']['start_time'])
