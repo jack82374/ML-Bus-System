@@ -13,7 +13,7 @@ function addRow() {
     headerRow.appendChild(routeHeader);
 
     var scheduleHeader = document.createElement("th");
-    scheduleHeader.innerHTML = "Schedule Relationship";
+    scheduleHeader.innerHTML = "Status";
     headerRow.appendChild(scheduleHeader);
 
     var timeTabledHeader = document.createElement("th");
@@ -21,7 +21,7 @@ function addRow() {
     headerRow.appendChild(timeTabledHeader);
 
     var mlHeader = document.createElement("th");
-    mlHeader.innerHTML = "Machine Learning Predicted Arrival Time";
+    mlHeader.innerHTML = "Predicted Arrival Time";
     headerRow.appendChild(mlHeader);
 
     var actualHeader = document.createElement("th");
