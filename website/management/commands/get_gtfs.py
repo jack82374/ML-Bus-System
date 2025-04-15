@@ -63,7 +63,7 @@ class Command(BaseCommand):
                         start_total_seconds = (start_hour*60*60) + (start_minute*60) + start_second
                         location_timestamp = datetime.fromtimestamp(int(location['vehicle']['timestamp']), tz=timezone.utc)
                         if (location['vehicle']['trip']['schedule_relationship'] == 'ADDED' and
-                            (location['vehicle']['trip']['route_id'] == '90255' or location['vehicle']['trip']['route_id'] == '90258')):
+                            (location['vehicle']['trip']['route_id'] == '93327' or location['vehicle']['trip']['route_id'] == '93330')):
                             # Should probably change this and every other check for the route_ids to be if route_id in list of relevant ids, like in the view
                             # It'd look better
                             trip_id_mapping[location_unique_key] = location['vehicle']['trip']['trip_id']
@@ -77,7 +77,7 @@ class Command(BaseCommand):
                                     'direction_id': location['vehicle']['trip']['direction_id']
                             }
                             )
-                        elif location['vehicle']['trip']['route_id'] == '90255' or location['vehicle']['trip']['route_id'] == '90258':
+                        elif location['vehicle']['trip']['route_id'] == '93327' or location['vehicle']['trip']['route_id'] == '93330':
                             trip_id = Trips.objects.get(trip_id=location['vehicle']['trip']['trip_id'])
                         else:
                             continue
@@ -85,7 +85,7 @@ class Command(BaseCommand):
                         #VehiclePosition.objects.delete(timestamp<)
                         #print(location)
                         #if (location['vehicle']['vehicle']['id'] != 1893 and location['vehicle']['trip']['schedule_relationship'] != 'ADDED'):
-                        if (location['vehicle']['trip']['route_id'] == '90255' or location['vehicle']['trip']['route_id'] == '90258'):
+                        if (location['vehicle']['trip']['route_id'] == '93327' or location['vehicle']['trip']['route_id'] == '93330'):
                             #print(location)
                             '''VehiclePosition.objects.update_or_create(
                                 trip = trip_id,
@@ -126,7 +126,7 @@ class Command(BaseCommand):
                     #print(update['trip_update']['trip']['trip_id'])
                     update_trip_data = update['trip_update']['trip']
                     update_unique_key = f"{update_trip_data['start_time']}_{update_trip_data['start_date']}_{update_trip_data['route_id']}_{update_trip_data['direction_id']}"
-                    if update['trip_update']['trip']['schedule_relationship'] == 'ADDED' and (update['trip_update']['trip']['route_id'] == '90255' or update['trip_update']['trip']['route_id'] == '90258'):
+                    if update['trip_update']['trip']['schedule_relationship'] == 'ADDED' and (update['trip_update']['trip']['route_id'] == '93327' or update['trip_update']['trip']['route_id'] == '93330'):
                         #print(update)
                         #print(trip_id_mapping)
                         try:
@@ -134,7 +134,7 @@ class Command(BaseCommand):
                         except KeyError as key:
                             self.stdout.write(self.style.WARNING(f'No Matching entry for {update_unique_key} in trip_id mapping, skipping'))
                             continue
-                    elif (update['trip_update']['trip']['route_id'] == '90255' or update['trip_update']['trip']['route_id'] == '90258'):
+                    elif (update['trip_update']['trip']['route_id'] == '93327' or update['trip_update']['trip']['route_id'] == '93330'):
                         trip_id=update['trip_update']['trip']['trip_id']
                     else:
                         continue
@@ -146,7 +146,7 @@ class Command(BaseCommand):
                     start_trip_total_seconds = (start_trip_hour*60*60) + (start_trip_minute*60) + start_trip_second
                     update_timestamp = datetime.fromtimestamp(int(update['trip_update']['timestamp']), tz=timezone.utc)
                     vehicle_id = update['trip_update'].get('vehicle', {}).get('vehicle_id')
-                    if (update['trip_update']['trip']['route_id'] == '90255' or update['trip_update']['trip']['route_id'] == '90258'):
+                    if (update['trip_update']['trip']['route_id'] == '93327' or update['trip_update']['trip']['route_id'] == '93330'):
                         TripUpdate.objects.update_or_create(trip = trip,
                                                             defaults={ 
                                                 'start_time': start_trip_total_seconds,

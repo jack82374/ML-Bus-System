@@ -78,13 +78,28 @@ class Command(BaseCommand):
                 for model in models_to_delete:
                     deleted_count, _ = model.objects.all().delete()
                     self.stdout.write(self.style.SUCCESS(f'Successfully deleted {deleted_count} {model.__name__} objects'))
+                # Examine trips first
+
+                relevant_trips_list = []
+                relevant_service_ids_list = []
+                relevant_shape_ids_list = []
+                with zip_file.open('trips.txt') as trips_file:
+                    trips_reader = csv.DictReader(io.TextIOWrapper(trips_file, 'utf-8'))
+                    for row in trips_reader:
+                        if (row.get('route_id').split('_')[1] == '93327' or row.get('route_id').split('_')[1] == '93330'):
+                            relevant_trips_list.append(row.get('trip_id'))
+                            relevant_service_ids_list.append(row.get('service_id'))
+                            relevant_shape_ids_list.append(row.get('shape_id'))
+
                 file_order = ['feed_info.txt', 'agency.txt', 'stops.txt', 'shapes.txt', 'routes.txt', 'calendar.txt', 'calendar_dates.txt', 'trips.txt', 'stop_times.txt']
                 for filename in file_order:
                     if filename in zip_file.namelist():
                         with zip_file.open(filename) as txt_file:
                             reader = csv.DictReader(io.TextIOWrapper(txt_file, 'utf-8'))
                             model_name = filename[:-4]
-                            self.import_csv_data(reader, model_name)
+                            self.import_csv_data(reader, model_name, relevant_trips_list, relevant_service_ids_list, relevant_shape_ids_list)
+                            # Put in something here to go through all the trips first and get their service_id and shape_id, while also
+                            # Saving the trip_id for stop_times
             self.stdout.write(self.style.SUCCESS('GTFS data imported successfully.'))
 
         except zipfile.BadZipFile as e:
@@ -94,7 +109,7 @@ class Command(BaseCommand):
         except Exception as e:
             self.stderr.write(self.style.ERROR(f'An unexpected error occurred during import: {e}'))
 
-    def import_csv_data(self, reader, model_name):
+    def import_csv_data(self, reader, model_name, relevant_trips_list, relevant_service_ids_list, relevant_shape_ids_list):
         model_map = {
             'feed_info': FeedInfo,
             'agency': Agency,
@@ -114,7 +129,7 @@ class Command(BaseCommand):
                 try:
                     #print(model_name)
                     # Consider limiting this to just the 208 and 205
-                    if model_name == 'routes' and (row.get('route_id').split('_')[1] == '90255' or row.get('route_id').split('_')[1] == '90258'):
+                    if model_name == 'routes' and (row.get('route_id').split('_')[1] == '93327' or row.get('route_id').split('_')[1] == '93330'):
                         #print(row)
                         #print(row.get('route_id'))
                         #print(row.get('route_id').split('_')[1])
@@ -125,7 +140,7 @@ class Command(BaseCommand):
                         agency_instance = Agency.objects.get(agency_id=agency_id) if agency_id else None
                         #model.objects.create(agency = agency_instance, **{k: v for k, v in row.items() if k != 'agency_id'})
                         objs.append(model(agency = agency_instance, route_id=route_id, **{k: v for k, v in row.items() if k not in ['route_id', 'agency_id']}))
-                    elif model_name == 'trips' and (row.get('route_id').split('_')[1] == '90255' or row.get('route_id').split('_')[1] == '90258'):
+                    elif model_name == 'trips' and (row.get('trip_id') in relevant_trips_list) and (row.get('route_id').split('_')[1] == '93327' or row.get('route_id').split('_')[1] == '93330'):
                         route_id = row.get('route_id').split('_')[1]
                         service_id = row.get('service_id')
                         #shape_id = row.get('shape_id')
@@ -134,7 +149,7 @@ class Command(BaseCommand):
                         #shape_instance = Shapes.objects.get(shape_id=shape_id) if shape_id else None
                         #model.objects.create(route=route_instance, calendar = calendar_instance, shape = shape_instance, **{k: v for k, v in row.items() if k not in ['route_id', 'service_id', 'shape_id']})
                         objs.append(model(route=route_instance, service=calendar_instance, **{k: v for k, v in row.items() if k not in ['route_id', 'service_id']}))
-                    elif model_name == 'stop_times':
+                    elif model_name == 'stop_times' and (row.get('trip_id') in relevant_trips_list):
                         trip_id = row.get('trip_id')
                         stop_id = row.get('stop_id')
                         #stop_seq = row.get('stop_sequence')
@@ -174,7 +189,11 @@ class Command(BaseCommand):
                     elif model_name == 'agency':
                         if (int(row.get('agency_id')) == 7778020):
                             objs.append(model(**row))
-                    elif model_name != 'agency' and model_name != 'trips' and model_name != 'routes':
+                    elif model_name == 'shapes' and (row.get('shape_id') in relevant_shape_ids_list):
+                        objs.append(model(**row))
+                    elif model_name == 'calendar' and (row.get('service_id') in relevant_service_ids_list):
+                        objs.append(model(**row))
+                    elif model_name == 'feed_info':
                         #model.objects.create(**row)
                         objs.append(model(**row))
                     #self.stdout.write(self.style.SUCCESS(f'{model_name} data imported succesfully!'))

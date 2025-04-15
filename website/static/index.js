@@ -71,7 +71,7 @@ function fetchLocations() {
                     var orientation = "east"
                 }
                 const vehicle_string = position.vehicle_id.toString();
-                if (position.route_id == '90255') {
+                if (position.route_id == '93327') {
                     const location_string = vehicle_string.concat(" on route ", "205 going ", orientation);
                     if (position.direction_id == 1) {
                         markerElement.appendChild(five_bus_img_light.cloneNode(true));
@@ -90,7 +90,7 @@ function fetchLocations() {
                         .addTo(map);
                     return { marker, markerElement };
                 }
-                else if (position.route_id == '90258') {
+                else if (position.route_id == '93330') {
                     const location_string = vehicle_string.concat(" on route ", "208 going ", orientation);
                     if (position.direction_id == 1) {
                         markerElement.appendChild(eight_bus_img_light.cloneNode(true));
@@ -168,10 +168,10 @@ function fetchShapes() {
 
                 var colour;
                 switch (shapesData[key].route_id) {
-                    case '90255':
+                    case '93327':
                         colour = '#FF5D5D';
                         break;
-                    case '90258':
+                    case '93330':
                         colour = '#5DC7FF';
                         break;
                     default:

@@ -86,7 +86,7 @@ DATABASES = {
         'NAME': 'map_site',
         'PASSWORD': '',
         'USER': '',
-        'HOST': 'localhost',
+        'HOST': '',
         'PORT': '3306'
     }
 }
