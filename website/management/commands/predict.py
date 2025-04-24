@@ -13,7 +13,6 @@ class Command(BaseCommand):
         parser.add_argument('trip_id', type=str, help='Trip_id to lookup')
 
     def handle(self, *args, **kwargs):
-        #model = keras.models.load_model('website/ml_model/model.keras')
         model = keras.models.load_model('website/ml_model/model2.keras')
         #stop_updates = StopUpdate.objects.get(trip_id=kwargs['trip_id'])
         conn = mysql.connector.connect(

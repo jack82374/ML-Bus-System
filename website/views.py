@@ -17,21 +17,21 @@ def index(request):
     return HttpResponse(template.render(None, request))
 
 def get_stops(request):
-    relevant_route_ids = ['90255', '90258']
+    relevant_route_ids = ['93327', '93330']
     stops = Stops.objects.filter(
         stoptimes__trip__route_id__in=relevant_route_ids
     ).distinct().values('stop_name', 'stop_desc', 'stop_lat', 'stop_lon', 'stop_id')
     return JsonResponse(list(stops), safe=False)
 
 def get_locations(request):
-    relevant_route_ids = ['90255', '90258']
+    relevant_route_ids = ['93327', '93330']
     positions = VehiclePosition.objects.filter(
         trip_id__in=Trips.objects.filter(route_id__in=relevant_route_ids).values_list('trip_id', flat=True)
     ).values('trip_id', 'direction_id', 'latitude', 'longitude', 'timestamp', 'route_id', 'vehicle_id')
     return JsonResponse(list(positions), safe=False)
 
 def get_shapes(request):
-    relevant_route_ids = ['90255', '90258']
+    relevant_route_ids = ['93327', '93330']
     shape_route_mapping = Trips.objects.filter(
         route_id__in=relevant_route_ids
     ).values_list('shape_id', 'route_id').distinct()

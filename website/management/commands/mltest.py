@@ -8,7 +8,7 @@ import mysql.connector
 import matplotlib.pyplot as plt
 from website import views
 from django.core.management.base import BaseCommand
-from website.models import SiteSettings
+from website.models import SiteSettings, ArchiveStopUpdate, ArchiveTripUpdate
 from keras._tf_keras.keras.preprocessing.sequence import pad_sequences
 
 class Command(BaseCommand):
@@ -98,13 +98,12 @@ class Command(BaseCommand):
         loss = model.evaluate(X_val, y_val)
         print(f'Validation Loss: {loss}')
         predictions = model.predict(X_val)
-        #model.save('website/ml_model/model.keras')
-        model.save('website/ml_model/model2.keras')
-        #ArchiveTripUpdate.objects.all().delete()
-        #ArchiveStopUpdate.objects.all().delete()
+        model.save('website/ml_model/model.keras')
+        ArchiveTripUpdate.objects.all().delete()
+        ArchiveStopUpdate.objects.all().delete()
         #views.reload_model_view(None)
 
-        for i in range(20):
+        '''for i in range(20):
             print(f"Predicted: {predictions[i]}, Actual: {y_val[i]}")
 
         plt.figure(figsize=(10, 6))
@@ -114,6 +113,6 @@ class Command(BaseCommand):
         plt.ylabel('Arrival Delay')
         plt.title('Predicted vs Actual Arrival Delay')
         plt.legend()
-        plt.show()
+        plt.show()'''
 
         maintence_settings.maintenance_mode = False
