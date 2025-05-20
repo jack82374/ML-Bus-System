@@ -60,6 +60,12 @@ class Command(BaseCommand):
             targets = []
             for trip_id in data['trip_id'].unique():
                 trip_data = data[data['trip_id'] == trip_id]
+                for i in range(len(trip_data) - seq_length + 1):
+                    seq = trip_data[features].iloc[i:i + seq_length].values
+                    sequences.append(seq)
+                    targets.append(trip_data[target].iloc[i + seq_length - 1])
+            '''for trip_id in data['trip_id'].unique():
+                trip_data = data[data['trip_id'] == trip_id]
                 if len(trip_data) >= seq_length:
                     for i in range(len(trip_data) - seq_length + 1):
                         seq = trip_data[features].iloc[i:i + seq_length].values
@@ -70,11 +76,11 @@ class Command(BaseCommand):
                     seq = trip_data[features].values
                     padded_seq = pad_sequences([seq], maxlen=seq_length, dtype='float32')[0]
                     sequences.append(padded_seq)
-                    targets.append(trip_data[target].iloc[-1])  # Use the last available target
+                    targets.append(trip_data[target].iloc[-1])  # Use the last available target'''
             return np.array(sequences), np.array(targets)
 
-        #seq_length = 20
-        seq_length = 50
+        seq_length = 20
+        #seq_length = 50
         sequences, targets = create_sequences(data, seq_length)
         print(f"Sequences is {sequences}, targets is {targets}")
         X = sequences
@@ -99,8 +105,8 @@ class Command(BaseCommand):
         print(f'Validation Loss: {loss}')
         predictions = model.predict(X_val)
         model.save('website/ml_model/model.keras')
-        ArchiveTripUpdate.objects.all().delete()
-        ArchiveStopUpdate.objects.all().delete()
+        #ArchiveTripUpdate.objects.all().delete()
+        #ArchiveStopUpdate.objects.all().delete()
         #views.reload_model_view(None)
 
         '''for i in range(20):

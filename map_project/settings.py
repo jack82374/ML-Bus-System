@@ -84,9 +84,9 @@ DATABASES = {
         #    "read_default_file": "/path/to/my.cnf",
         #},
         'NAME': 'map_site',
-        'PASSWORD': '',
-        'USER': '',
-        'HOST': '',
+        'PASSWORD': '8001',
+        'USER': 'root',
+        'HOST': 'localhost',
         'PORT': '3306'
     }
 }
@@ -139,7 +139,6 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 GTFS_REALTIME_API_URL = "https://api.nationaltransport.ie/gtfsr/v2/TripUpdates?format=json"
 GTFS_REALTIME_LOCATIONS_URL = "https://api.nationaltransport.ie/gtfsr/v2/Vehicles?format=json"
-#GTFS_REALTIME_API_URL = "https://api.nationaltransport.ie/gtfsr/v2/gtfsr?format=json&key=824e56ea80354749b8a7e4560fb70a5c"
 GTFS_REALTIME_API_KEY = ""
 GTFS_ZIP_URL = "https://www.transportforireland.ie/transitData/Data/GTFS_Realtime.zip"
 GTFS_LOCAL_HASH = ""

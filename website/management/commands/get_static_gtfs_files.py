@@ -86,7 +86,7 @@ class Command(BaseCommand):
                 with zip_file.open('trips.txt') as trips_file:
                     trips_reader = csv.DictReader(io.TextIOWrapper(trips_file, 'utf-8'))
                     for row in trips_reader:
-                        if (row.get('route_id').split('_')[1] == '93327' or row.get('route_id').split('_')[1] == '93330'):
+                        if (row.get('route_id').split('_')[1] == '97732' or row.get('route_id').split('_')[1] == '97735'):
                             relevant_trips_list.append(row.get('trip_id'))
                             relevant_service_ids_list.append(row.get('service_id'))
                             relevant_shape_ids_list.append(row.get('shape_id'))
@@ -129,7 +129,7 @@ class Command(BaseCommand):
                 try:
                     #print(model_name)
                     # Consider limiting this to just the 208 and 205
-                    if model_name == 'routes' and (row.get('route_id').split('_')[1] == '93327' or row.get('route_id').split('_')[1] == '93330'):
+                    if model_name == 'routes' and (row.get('route_id').split('_')[1] == '97732' or row.get('route_id').split('_')[1] == '97735'):
                         #print(row)
                         #print(row.get('route_id'))
                         #print(row.get('route_id').split('_')[1])
@@ -140,7 +140,7 @@ class Command(BaseCommand):
                         agency_instance = Agency.objects.get(agency_id=agency_id) if agency_id else None
                         #model.objects.create(agency = agency_instance, **{k: v for k, v in row.items() if k != 'agency_id'})
                         objs.append(model(agency = agency_instance, route_id=route_id, **{k: v for k, v in row.items() if k not in ['route_id', 'agency_id']}))
-                    elif model_name == 'trips' and (row.get('trip_id') in relevant_trips_list) and (row.get('route_id').split('_')[1] == '93327' or row.get('route_id').split('_')[1] == '93330'):
+                    elif model_name == 'trips' and (row.get('trip_id') in relevant_trips_list) and (row.get('route_id').split('_')[1] == '97732' or row.get('route_id').split('_')[1] == '97735'):
                         route_id = row.get('route_id').split('_')[1]
                         service_id = row.get('service_id')
                         #shape_id = row.get('shape_id')

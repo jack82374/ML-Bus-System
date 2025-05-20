@@ -97,10 +97,10 @@ function addRow() {
                 var mlCell = newRow.insertCell();
                 var actualCell = newRow.insertCell();
 
-                if (time_entry.trip__route_id == 93327) {
+                if (time_entry.trip__route_id == 97732) {
                     routeCell.innerHTML = 205;
                 }
-                else if (time_entry.trip__route_id == 93330) {
+                else if (time_entry.trip__route_id == 97735) {
                     routeCell.innerHTML = 208;
                 }
 
